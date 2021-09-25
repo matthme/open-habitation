@@ -73,14 +73,6 @@ def calculate_rating(yearly_production=None):
     else:
         return 'A'
 
-def get_minergie(searchText):
-    url = "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.bfe.minergiegebaeude&searchText=%s&searchField=address&contains=true" % (
-        searchText)
-    return requests.get(url)
-
-
-
-searchText = 'Hauptstrasse 82, 4558 Hersiwil'
 
 def calculate_results(searchText):
     output = {}
