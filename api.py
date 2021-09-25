@@ -29,7 +29,7 @@ class ProductionResource:
             200:
                 description: JSON blob
         """
-        resp.media = yearly_production("Wiesenstrasse", 2, 5200, "Brugg")
+        resp.media = calculate_results("Wiesenstrasse, 2, 5200, Brugg")
         resp.media_handler = json_handler
 
     def on_post(self, req, resp):
@@ -52,7 +52,6 @@ class ProductionResource:
         """
         obj = req.get_media()
         address = obj.get('address')
-        print(address)
         resp.media = yearly_production(address)
         resp.media_handler = json_handler
         get_production_info_string(address)

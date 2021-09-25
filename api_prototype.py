@@ -1,7 +1,5 @@
 import requests
 from pyproj import Transformer
-import pandas
-
 
 
 def get_production_info_string(searchText):
@@ -11,7 +9,7 @@ def get_production_info_string(searchText):
 
 def get_production_info(street, nr, zipcode, city):
     searchText = street + " " + str(nr) + ", " + str(zipcode) + " " + city
-    return get_production_info(searchText)
+    return get_production_info_string(searchText)
 
 def get_sub_category(response):
     return response.json()["results"][0]["attributes"]["sub_category_en"]
@@ -81,7 +79,7 @@ def get_pv_gis_data(coordinate_x, coordinate_y):
 
 def yearly_production(street, nr=None, zipcode=None, city=None):
     try:
-        if nr == None:
+        if nr is None:
             response = get_production_info_string(street)
         else:
             response = get_production_info(street, nr, zipcode, city)
@@ -99,4 +97,37 @@ def yearly_production(street, nr=None, zipcode=None, city=None):
         coordinate_y = response.json()['results'][0]['geometry']['y']
         return get_pv_gis_data(coordinate_x, coordinate_y)
     else:
-        return 'No photovoltaic found.'
+        return 0
+
+def calculate_rating(yearly_production=None):
+    if yearly_production is None:
+        return 'G'
+    if yearly_production < 5000:
+        return 'E'
+    else:
+        return 'A'
+
+def get_minergie(searchText):
+    url = "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.bfe.minergiegebaeude&searchText=%s&searchField=address&contains=true" % (
+        searchText)
+    return requests.get(url)
+
+
+
+searchText = 'Hauptstrasse 82, 4558 Hersiwil'
+
+def calculate_results(searchText):
+    output = {}
+    output['address'] = searchText
+    output['yearly_production'] = yearly_production(searchText)
+    output['eco_rating'] = calculate_rating(output['yearly_production'])
+
+    try:
+        response = get_production_info_string(searchText)
+        output['category'] = get_sub_category(response)
+        output['total_power'] = response.json()["results"][0]["attributes"]["total_power"]
+    except:
+        output['category'] = 'no data'
+        output['total_power'] = -1
+
+    return output
