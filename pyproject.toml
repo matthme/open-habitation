@@ -8,6 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 pandas-datapackage-reader = "^0.18.0"
 falcon-apispec = "v0.3.0"
+python = ">=3.7.1"
 
 [tool.poetry.dev-dependencies]
 
