@@ -2,6 +2,7 @@ import falcon
 import json
 import functools
 
+from pathlib import Path
 from falcon import media
 from falcon_apispec import FalconPlugin
 from wsgiref.simple_server import make_server
@@ -17,6 +18,7 @@ json_handler = media.JSONHandler(
     dumps=functools.partial(json.dumps, indent=4, sort_keys=True),
 )
 
+app.add_static_route('/public', Path('./public').resolve())
 
 class ProductionResource:
     def on_get(self, req, resp):
@@ -74,5 +76,5 @@ spec.path(resource=prod_res)
 
 if __name__ == '__main__':
     with make_server('', 8000, application) as httpd:
-        print('Serving on port 8000...')
+        print('Serving on http://localhost:8000')
         httpd.serve_forever()
