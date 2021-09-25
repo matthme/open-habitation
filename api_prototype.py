@@ -11,46 +11,8 @@ def get_production_info(street, nr, zipcode, city):
     searchText = street + " " + str(nr) + ", " + str(zipcode) + " " + city
     return get_production_info_string(searchText)
 
-def get_sub_category(response):
-    return response.json()["results"][0]["attributes"]["sub_category_en"]
-
-
-def get_total_power(response):
-    return response.json()["results"][0]["attributes"]["total_power"]
-
-
-def yearly_production_old(street, nr, zipcode, city):
-    try:
-        response = get_production_info(street, nr, zipcode, city)
-    except Exception:
-        print("API not available")
-        return 0
-
-    try:
-        response_json = response.json()
-    except Exception:
-        print("Response could not be converted to json.")
-
-    try:
-        sub_category = get_sub_category(response)
-    except KeyError:
-        sub_category = "unknown"
-
-    try:
-        total_power = get_total_power(response)
-        total_power = float(total_power[:-3])  # TODO: consider the unity
-    except KeyError:
-        total_power = 0
-
-    if sub_category == "Photovoltaic":
-
-        yearly_production = total_power * 1000
-    elif sub_category == "Wind":
-        yearly_production = total_power * 3600
-    else:
-        yearly_production = -1
-
-    return yearly_production
+def get_sub_category(response_json):
+    return response_json["attributes"]["sub_category_en"]
 
 
 def get_pv_gis_data(coordinate_x, coordinate_y):
@@ -85,10 +47,14 @@ def yearly_production(street, nr=None, zipcode=None, city=None):
             response = get_production_info(street, nr, zipcode, city)
     except Exception:
         print("API not available")
-        return 0
+        return None
+
+    result_data = response.json()["results"]
+    if len(result_data) == 0:
+        return None
 
     try:
-        sub_category = get_sub_category(response)
+        sub_category = get_sub_category(result_data[0])
     except KeyError:
         sub_category = "unknown"
 
@@ -97,7 +63,7 @@ def yearly_production(street, nr=None, zipcode=None, city=None):
         coordinate_y = response.json()['results'][0]['geometry']['y']
         return get_pv_gis_data(coordinate_x, coordinate_y)
     else:
-        return 0
+        return None
 
 def calculate_rating(yearly_production=None):
     if yearly_production is None:
@@ -124,8 +90,12 @@ def calculate_results(searchText):
 
     try:
         response = get_production_info_string(searchText)
-        output['category'] = get_sub_category(response)
-        output['total_power'] = response.json()["results"][0]["attributes"]["total_power"]
+        result_data = response.json()["results"]
+        if len(result_data) == 0:
+            # No address found
+            return None
+        output['category'] = get_sub_category(result_data[0])
+        output['total_power'] = result_data[0]["attributes"]["total_power"]
     except:
         output['category'] = 'no data'
         output['total_power'] = -1

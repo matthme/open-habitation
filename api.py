@@ -20,6 +20,8 @@ json_handler = media.JSONHandler(
 
 app.add_static_route('/public', Path('./public').resolve())
 
+result_cache = []
+
 class ProductionResource:
     def on_get(self, req, resp):
         """Handles GET requests
@@ -51,10 +53,22 @@ class ProductionResource:
                 description: JSON blob
         """
         obj = req.get_media()
-        address = obj.get('address')
-        resp.media = yearly_production(address)
+        address = obj.get('address').strip()
+        data = None
+        for r in result_cache:
+            if r['address'] == address:
+                data = r['data']
+        if data is None:
+            data = calculate_results(address)
+            if data is not None:
+                data['id'] = len(result_cache) + 1
+                result_cache.append(data)
+            else:
+                # TODO: throw 404 error
+                pass
+        resp.media = result_cache
         resp.media_handler = json_handler
-        get_production_info_string(address)
+        # get_production_info_string(address)
 
 
 prod_res = ProductionResource()
