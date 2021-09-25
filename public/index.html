@@ -3,63 +3,95 @@
 <head>
 <meta charset="utf-8">
 
-<title>EcoHabitas Example - Open Buildings API</title>
+<title>Open Habitation API</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.1/css/bootstrap.min.css" integrity="sha512-6KY5s6UI5J7SVYuZB4S/CZMyPylqyyNZco376NM2Z8Sb8OxEdp02e1jkKk/wZxIEmjQ6DRCEBhni+gpr9c4tvA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.css">
+</head>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<body>
+
+<div class="container">
+<div class="col-sm-12 col-sm-offset-2">
+
+<header>
+    <h1>Open Habitation</h1>
+    <p>Swiss open habitation API</p>
+</header>
+
+<article>
+    <h3>Basic Example</h3>
+
+
+    <div class="ui-widget station">
+      <form>
+        <input class="form-control" id="search" placeholder="Enter an address ..." />
+      </form>
+    </div>
+    <div class="media">
+    </div>
+
+    <table class="table" id="results">
+      <thead>
+        <tr>
+          <th scope="col" data-col="id">#</th>
+          <th scope="col" data-col="address">Address</th>
+          <th scope="col" data-col="yearly_production">Production (annual)</th>
+          <th scope="col" data-col="category">Category</th>
+          <th scope="col" data-col="eco_rating">Eco Rating</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+</article>
+
+<footer class="footer">
+  <hr>
+    <p class="pull-right">
+      Powered by <a href="http://opendata.ch/">Opendata.ch</a>
+      &bull;
+      <a href="https://github.com/fuerstenberger/EcoHabitasOpen" target="_blank">
+          Source Code
+      </a>
+    </p>
+</footer>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.1/js/bootstrap.min.js" integrity="sha512-ewfXo9Gq53e1q1+WDTjaHAGZ8UvCWq0eXONhwDuIoaH8xz2r96uoAYaQCm1oQhnBfRXrvJztNXFsTloJfgbL5Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script>
 
 $(function () {
 
-    var station = '8501120';
-
-    function refresh() {
-        if (station) {
-            $.get('../v1/stationboard', {id: station, limit: 15}, function(data) {
-                $('#stationboard tbody').empty();
-                $(data.stationboard).each(function () {
-                    var prognosis, departure, delay, line = '<tr><td>';
-                    departure = moment(this.stop.departure);
-                    if (this.stop.prognosis.departure) {
-                        prognosis = moment(this.stop.prognosis.departure);
-                        delay = (prognosis.valueOf() - departure.valueOf()) / 60000;
-                        line += departure.format('HH:mm') + ' <strong>+' + delay + ' min</strong>';
-                    } else {
-                        line += departure.format('HH:mm');
-                    }
-                    line += '</td><td>' + this.name + '</td><td>' + this.to + '</td></tr>';
-                    $('#stationboard tbody').append(line);
-                });
-            }, 'json');
-        }
+  function refresh(e) {
+    e.stopPropagation();
+    search = $('#search').val();
+    if (search.length > 3) {
+        $.post('/api/production/yearly', {address: search}, function(data) {
+            $results = $('#results tbody').empty();
+            $thead = $('#results thead th');
+            $(data).each(function () {
+                var line = '<tr>';
+                var row = this;
+                $thead.each(function () {
+                  ref = $(this).data('col');
+                  line += '<td>' + row[ref] + '</td>';
+                })
+                $results.append(line + '</tr>');
+            });
+        }, 'json');
     }
+    return false;
+  }
 
-    $('#station').autocomplete({
-        source: function (request, response) {
-            $.get('../v1/locations', {query: request.term, type: 'station'}, function(data) {
-                response($.map(data.stations, function(station) {
-                    return {
-                        label: station.name,
-                        station: station
-                    }
-                }));
-            }, 'json');
-        },
-        select: function (event, ui) {
-            station = ui.item.station.id;
-            refresh();
-        }
-    });
+  $('#search').parent().submit(refresh);
 
-    setInterval(refresh, 30000);
-    refresh();
 });
 
 </script>
@@ -103,56 +135,6 @@ $(function () {
     }
 
 </style>
-</head>
-
-<body>
-
-<div class="container">
-<div class="col-sm-8 col-sm-offset-2">
-
-<header>
-    <h1><a href="../">Open Habitation</a></h1>
-    <p>Swiss open habitation API</p>
-</header>
-
-<article>
-    <p class="pull-right">
-        <a class="btn btn-link" href="https://github.com/OpendataCH/Transport/blob/master/web/examples/stationboard.html" target="_blank">
-            <span class="glyphicon glyphicon-new-window"></span>
-            Source Code
-        </a>
-    </p>
-    <h3>Basic Example</h3>
-    <div class="ui-widget station">
-        <input class="form-control" id="station" value="Lausanne" placeholder="Station" />
-    </div>
-    <div class="media">
-    </div>
-
-    <table id="stationboard">
-        <colgroup>
-            <col width="120">
-            <col width="140">
-            <col width="230">
-        </colgroup>
-        <thead>
-            <tr>
-                <th align="left">Zeit</th>
-                <th>&nbsp;</th>
-                <th align="left">Nach</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</article>
-
-<footer class="footer">
-    <hr>
-    <p>Powered by <a href="http://opendata.ch/">Opendata.ch</a></p>
-</footer>
-
-</div>
-</div>
 
 </body>
 </html>
