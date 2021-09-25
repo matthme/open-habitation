@@ -1,16 +1,22 @@
 import requests
 from pyproj import Transformer
+import pandas
+
 
 def get_production_info(street, nr, zipcode, city):
     searchText = street + " " + str(nr) + ", " + str(zipcode) + " " + city
-    url = "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.bfe.elektrizitaetsproduktionsanlagen&searchText=%s&searchField=address&contains=true" %(searchText)
+    url = "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.bfe.elektrizitaetsproduktionsanlagen&searchText=%s&searchField=address&contains=true" % (
+        searchText)
     return requests.get(url)
+
 
 def get_sub_category(response):
     return response.json()["results"][0]["attributes"]["sub_category_en"]
 
+
 def get_total_power(response):
     return response.json()["results"][0]["attributes"]["total_power"]
+
 
 def yearly_production_old(street, nr, zipcode, city):
     try:
@@ -35,17 +41,16 @@ def yearly_production_old(street, nr, zipcode, city):
     except KeyError:
         total_power = 0
 
-
     if sub_category == "Photovoltaic":
 
-
-        yearly_production = total_power*1000
+        yearly_production = total_power * 1000
     elif sub_category == "Wind":
-        yearly_production = total_power*3600
+        yearly_production = total_power * 3600
     else:
         yearly_production = -1
 
     return yearly_production
+
 
 def get_pv_gis_data(coordinate_x, coordinate_y):
     transformer = Transformer.from_crs('EPSG:21781', 'EPSG:4326')  # transformer from LV03 to wgs84
@@ -58,17 +63,18 @@ def get_pv_gis_data(coordinate_x, coordinate_y):
     angle = 35
     aspect = 60
 
-    url = 'https://re.jrc.ec.europa.eu/api/PVcalc?' +\
-          'lat=' + str(lat) +\
-          '&lon=' + str(lon) +\
-          '&peakpower=' + str(peakpower) +\
-          '&loss=' + str(loss) +\
-          '&mountingplace=' + mountingplace +\
-          '&angle=' + str(angle) +\
+    url = 'https://re.jrc.ec.europa.eu/api/PVcalc?' + \
+          'lat=' + str(lat) + \
+          '&lon=' + str(lon) + \
+          '&peakpower=' + str(peakpower) + \
+          '&loss=' + str(loss) + \
+          '&mountingplace=' + mountingplace + \
+          '&angle=' + str(angle) + \
           '&aspect=' + str(aspect) + \
           '&outputformat=json'
 
-    return(requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
+    return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
+
 
 def yearly_production(street, nr, zipcode, city):
     try:
@@ -87,7 +93,8 @@ def yearly_production(street, nr, zipcode, city):
         coordinate_y = response.json()['results'][0]['geometry']['y']
         return get_pv_gis_data(coordinate_x, coordinate_y)
     else:
-        return 'No Photovoltaic found.'
+        return 'No photovoltaic found.'
+
 
 # test
 street = 'Hauptstrasse'
@@ -95,5 +102,10 @@ nr = 82
 zipcode = 4558
 city = 'Hersiwil'
 
+
 yearly_production(street, nr, zipcode, city)
+
+
+
+examples = pandas.read_csv('example.csv')
 
