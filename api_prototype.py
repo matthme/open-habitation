@@ -94,18 +94,3 @@ def yearly_production(street, nr, zipcode, city):
         return get_pv_gis_data(coordinate_x, coordinate_y)
     else:
         return 'No photovoltaic found.'
-
-
-# test
-street = 'Hauptstrasse'
-nr = 82
-zipcode = 4558
-city = 'Hersiwil'
-
-
-yearly_production(street, nr, zipcode, city)
-
-
-
-examples = pandas.read_csv('example.csv')
-

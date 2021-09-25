@@ -3,10 +3,11 @@ import json
 import functools
 
 from falcon import media
+from falcon_apispec import FalconPlugin
 from wsgiref.simple_server import make_server
 from pandas_datapackage_reader import read_datapackage
 from apispec import APISpec
-from falcon_apispec import FalconPlugin
+from swagger_ui import falcon_api_doc
 
 app = application = falcon.App()
 
@@ -31,7 +32,7 @@ class ProductionResource:
 
 
 prod_res = ProductionResource()
-app.add_route("/production/yearly", prod_res)
+app.add_route("/api/production/yearly", prod_res)
 
 
 spec = APISpec(
@@ -41,8 +42,10 @@ spec = APISpec(
     plugins=[FalconPlugin(app)],
 )
 
-spec.path(resource=bldgs)
-print(spec.to_yaml())
+spec.path(resource=prod_res)
+
+# BUG! https://github.com/PWZER/swagger-ui-py/issues/29
+# falcon_api_doc(app, config=spec.to_dict(), url_prefix='/api/doc', title='API doc')
 
 if __name__ == '__main__':
     with make_server('', 8000, application) as httpd:
