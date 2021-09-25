@@ -26,9 +26,15 @@ Test the API using a REST client such as [RESTer](https://github.com/frigus02/RE
 
 http://localhost:8000/production/yearly
 
+
+## Postman settings
+<img width="960" alt="postman_parameters" src="https://user-images.githubusercontent.com/53759085/134770099-a13cd3fb-7d9d-4a53-9b60-43879fde8710.png">
+
+
 ## License
 
 This package is licensed by its maintainers under the MIT License.
 
 If you intended to use these data in a public or commercial product, please
 check the data sources themselves for any specific restrictions.
+
