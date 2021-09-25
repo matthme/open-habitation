@@ -18,7 +18,6 @@ json_handler = media.JSONHandler(
     dumps=functools.partial(json.dumps, indent=4, sort_keys=True),
 )
 
-app.add_static_route('/public', Path('./public').resolve())
 
 result_cache = []
 
@@ -86,6 +85,18 @@ spec.path(resource=prod_res)
 
 # BUG! https://github.com/PWZER/swagger-ui-py/issues/29
 # falcon_api_doc(app, config=spec.to_dict(), url_prefix='/api/doc', title='API doc')
+
+
+class IndexResource(object):
+    def on_get(self, req, resp):
+        resp.status = falcon.HTTP_200
+        resp.content_type = 'text/html'
+        with open(Path('./public/index.html').resolve(), 'r') as f:
+            resp.text = f.read()
+
+app.add_route('/', IndexResource())
+app.add_static_route('/public', Path('./public/').resolve())
+
 
 if __name__ == '__main__':
     with make_server('', 8000, application) as httpd:
