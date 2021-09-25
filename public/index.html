@@ -73,28 +73,32 @@
 
 $(function () {
 
+  function populate(data) {
+      $results = $('#results tbody').empty();
+      $thead = $('#results thead th');
+      $(data).each(function () {
+          var line = '<tr>';
+          var row = this;
+          $thead.each(function () {
+            ref = $(this).data('col');
+            line += '<td>' + row[ref] + '</td>';
+          })
+          $results.append(line + '</tr>');
+      });
+  }
+
   function refresh(e) {
     e.stopPropagation();
     search = $('#search').val();
     if (search.length > 3) {
-        $.post('/api/production/yearly', {address: search}, function(data) {
-            $results = $('#results tbody').empty();
-            $thead = $('#results thead th');
-            $(data).each(function () {
-                var line = '<tr>';
-                var row = this;
-                $thead.each(function () {
-                  ref = $(this).data('col');
-                  line += '<td>' + row[ref] + '</td>';
-                })
-                $results.append(line + '</tr>');
-            });
-        }, 'json');
+        $.post('/api/production/yearly', {address: search}, populate, 'json');
     }
     return false;
   }
 
   $('#search').parent().submit(refresh);
+
+  $.get('/api/production/yearly', {}, populate, 'json');
 
 });
 

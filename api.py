@@ -1,3 +1,4 @@
+from api_prototype import *
 import falcon
 import json
 import functools
@@ -12,7 +13,6 @@ from swagger_ui import falcon_api_doc
 
 app = application = falcon.App()
 
-from api_prototype import *
 
 json_handler = media.JSONHandler(
     dumps=functools.partial(json.dumps, indent=4, sort_keys=True),
@@ -20,6 +20,7 @@ json_handler = media.JSONHandler(
 
 
 result_cache = []
+
 
 class ProductionResource:
     def on_get(self, req, resp):
@@ -30,7 +31,7 @@ class ProductionResource:
             200:
                 description: JSON blob
         """
-        resp.media = calculate_results("Wiesenstrasse, 2, 5200, Brugg")
+        resp.media = result_cache
         resp.media_handler = json_handler
 
     def on_post(self, req, resp):
@@ -56,7 +57,7 @@ class ProductionResource:
         data = None
         for r in result_cache:
             if r['address'] == address:
-                data = r['data']
+                data = r
         if data is None:
             data = calculate_results(address)
             if data is not None:
@@ -93,6 +94,7 @@ class IndexResource(object):
         resp.content_type = 'text/html'
         with open(Path('./public/index.html').resolve(), 'r') as f:
             resp.text = f.read()
+
 
 app.add_route('/', IndexResource())
 app.add_static_route('/public', Path('./public/').resolve())

@@ -7,16 +7,19 @@ def get_production_info_string(searchText):
         searchText)
     return requests.get(url)
 
+
 def get_production_info(street, nr, zipcode, city):
     searchText = street + " " + str(nr) + ", " + str(zipcode) + " " + city
     return get_production_info_string(searchText)
+
 
 def get_sub_category(response_json):
     return response_json["attributes"]["sub_category_en"]
 
 
 def get_pv_gis_data(coordinate_x, coordinate_y):
-    transformer = Transformer.from_crs('EPSG:21781', 'EPSG:4326')  # transformer from LV03 to wgs84
+    # transformer from LV03 to wgs84
+    transformer = Transformer.from_crs('EPSG:21781', 'EPSG:4326')
     coordinate_wgs84 = transformer.transform(coordinate_x, coordinate_y)
     lat = coordinate_wgs84[0]
     lon = coordinate_wgs84[1]
@@ -58,12 +61,16 @@ def yearly_production(street, nr=None, zipcode=None, city=None):
     except KeyError:
         sub_category = "unknown"
 
+    if response.json()['results'][0]['geometry'] is None:
+        return None
+
     if sub_category == "Photovoltaic":
         coordinate_x = response.json()['results'][0]['geometry']['x']
         coordinate_y = response.json()['results'][0]['geometry']['y']
         return get_pv_gis_data(coordinate_x, coordinate_y)
     else:
         return None
+
 
 def calculate_rating(yearly_production=None):
     if yearly_production is None:
