@@ -3,12 +3,15 @@ from pyproj import Transformer
 import pandas
 
 
-def get_production_info(street, nr, zipcode, city):
-    searchText = street + " " + str(nr) + ", " + str(zipcode) + " " + city
+
+def get_production_info_string(searchText):
     url = "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.bfe.elektrizitaetsproduktionsanlagen&searchText=%s&searchField=address&contains=true" % (
         searchText)
     return requests.get(url)
 
+def get_production_info(street, nr, zipcode, city):
+    searchText = street + " " + str(nr) + ", " + str(zipcode) + " " + city
+    return get_production_info(searchText)
 
 def get_sub_category(response):
     return response.json()["results"][0]["attributes"]["sub_category_en"]
@@ -76,9 +79,12 @@ def get_pv_gis_data(coordinate_x, coordinate_y):
     return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
 
 
-def yearly_production(street, nr, zipcode, city):
+def yearly_production(street, nr=None, zipcode=None, city=None):
     try:
-        response = get_production_info(street, nr, zipcode, city)
+        if nr == None:
+            response = get_production_info_string(street)
+        else:
+            response = get_production_info(street, nr, zipcode, city)
     except Exception:
         print("API not available")
         return 0

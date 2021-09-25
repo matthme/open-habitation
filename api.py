@@ -30,6 +30,31 @@ class ProductionResource:
         resp.media = yearly_production("Wiesenstrasse", 2, 5200, "Brugg")
         resp.media_handler = json_handler
 
+    def on_post(self, req, resp):
+        """Handles POST requests
+        ---
+        description: Gets building data for a search address
+        requestBody:
+            required: true
+            content:
+                application/x-www-form-urlencoded:
+                    schema:
+                        type: object
+                        properties:
+                            address:
+                                type: string
+                                description: Building in Switzerland
+        responses:
+            200:
+                description: JSON blob
+        """
+        obj = req.get_media()
+        address = obj.get('address')
+        print(address)
+        resp.media = yearly_production(address)
+        resp.media_handler = json_handler
+        get_production_info_string(address)
+
 
 prod_res = ProductionResource()
 app.add_route("/api/production/yearly", prod_res)
