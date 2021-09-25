@@ -56,6 +56,20 @@ falcon = "*"
 PyYAML = ">=3.10"
 
 [[package]]
+name = "gunicorn"
+version = "20.1.0"
+description = "WSGI HTTP Server for UNIX"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.extras]
+eventlet = ["eventlet (>=0.24.1)"]
+gevent = ["gevent (>=1.4.0)"]
+setproctitle = ["setproctitle"]
+tornado = ["tornado (>=0.2)"]
+
+[[package]]
 name = "idna"
 version = "3.2"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -215,7 +229,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.1"
-content-hash = "be530833782debccce5a9806c37ba916677ba41c568d0235bf60da1838b09031"
+content-hash = "5c0568a9bca7a8027d1568e0fc8a34e4ded5e835f5f07fe1f7e5c50fcd70dc87"
 
 [metadata.files]
 apispec = [
@@ -262,6 +276,10 @@ falcon = [
 falcon-apispec = [
     {file = "falcon-apispec-0.3.0.tar.gz", hash = "sha256:f69d2c4f8f4ae25fa1447aa6dea337e1c9d06cf2d4f700531b9ebac810dc907d"},
     {file = "falcon_apispec-0.3.0-py3-none-any.whl", hash = "sha256:6e67b0200a5ed8c2960016d06a89384c5c50960cc6cef14ce4522965f7e6817e"},
+]
+gunicorn = [
+    {file = "gunicorn-20.1.0-py3-none-any.whl", hash = "sha256:9dcc4547dbb1cb284accfb15ab5667a0e5d1881cc443e0677b4882a4067a807e"},
+    {file = "gunicorn-20.1.0.tar.gz", hash = "sha256:e0a968b5ba15f8a328fdfd7ab1fcb5af4470c28aaf7e55df02a99bc13138e6e8"},
 ]
 idna = [
     {file = "idna-3.2-py3-none-any.whl", hash = "sha256:14475042e284991034cb48e06f6851428fb14c4dc953acd9be9a5e95c7b6dd7a"},
