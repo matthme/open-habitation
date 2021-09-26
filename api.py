@@ -76,8 +76,8 @@ app.add_route("/api/production/yearly", prod_res)
 
 
 spec = APISpec(
-    title="EcoHabitasOpen APP",
-    version="0.0.1",
+    title="Open Habitation API",
+    version="0.1.0",
     openapi_version='3.0',
     plugins=[FalconPlugin(app)],
 )
@@ -85,7 +85,8 @@ spec = APISpec(
 spec.path(resource=prod_res)
 
 # BUG! https://github.com/PWZER/swagger-ui-py/issues/29
-# falcon_api_doc(app, config=spec.to_dict(), url_prefix='/api/doc', title='API doc')
+# falcon_api_doc(app, config=spec.to_dict(), url_prefix='/api/doc/', title='API doc')
+# print(spec.to_yaml())
 
 
 class IndexResource(object):
