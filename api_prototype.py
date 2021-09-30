@@ -23,7 +23,7 @@ def get_pv_gis_data(coordinate_x, coordinate_y):
     coordinate_wgs84 = transformer.transform(coordinate_x, coordinate_y)
     lat = coordinate_wgs84[0]
     lon = coordinate_wgs84[1]
-    peakpower = total_power
+    peakpower = result_data[0]["attributes"]["total_power"]
     loss = 14
     mountingplace = 'free'
     angle = 35
