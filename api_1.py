@@ -48,8 +48,7 @@ class ElectricityProduction():
 class StreetSearch():
 
     def on_get(self, req, resp):
-        for key, value in req.params.items():
-            print(key, value)
+
         #print("received get request on /addresssearch")
         #print(req.params["term"])
         cursor = connection.cursor()
@@ -143,7 +142,7 @@ spec.path(resource=prod_res)
 
 # BUG! https://github.com/PWZER/swagger-ui-py/issues/29
 falcon_api_doc(app, config=spec.to_dict(), url_prefix='/api/doc/', title='API doc')
-print(spec.to_yaml())
+#print(spec.to_yaml())
 
 class IndexResource(object):
     def on_get(self, req, resp):
@@ -154,6 +153,7 @@ class IndexResource(object):
 
 
 app.add_route('/', IndexResource())
+app.add_route('/js/script.js', Path('./js/script.js').resolve())
 app.add_static_route('/public', Path('./public/').resolve())
 
 
