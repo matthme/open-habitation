@@ -54,7 +54,11 @@ filenames = {"ElectricityProductionPlant.csv":"electricity_production", "MainCat
 for filename, table_name in filenames.items():
     try:
         df = pd.read_csv('./data/ch.bfe.elektrizitaetsproduktionsanlagen/%s' %filename, index_col=0)
-        print(df.head(2))
+        print(df.head(1))
+        if filename=="ElectricityProductionPlant.csv": # create additional column CompleteAddress which combines street/nr/zipcode/municipality
+            df["CompleteAddress"] = df["Address"] + ", " + df["PostCode"].astype(str) + " " + df["Municipality"]
+            print("Added column 'CompleteAddress':")
+            print(df.head(1))
         df.to_sql(table_name, engine, if_exists="fail")
         print("Written to table '%s'" %table_name)
     except ValueError as e:

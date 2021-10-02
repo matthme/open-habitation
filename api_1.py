@@ -11,6 +11,17 @@ from pandas_datapackage_reader import read_datapackage
 from apispec import APISpec
 from swagger_ui import falcon_api_doc
 
+import psycopg2 as pg
+
+host = "0.0.0.0"
+port = "5434"
+database="geo_admin"
+username = "testuser"
+password = "test123"
+
+connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+
+
 app = application = falcon.App()
 
 
@@ -34,7 +45,28 @@ class ElectricityProduction():
             [description]
         """
 
-        
+class StreetSearch():
+
+    def on_get(self, req, resp):
+        for key, value in req.params.items():
+            print(key, value)
+        #print("received get request on /addresssearch")
+        #print(req.params["term"])
+        cursor = connection.cursor()
+        cursor.execute("select \"CompleteAddress\" from electricity_production where \"CompleteAddress\" ilike '%s%%' order by \"Address\" limit 8" %req.params["term"])
+        suggestions = cursor.fetchall()
+        suggestions = [i[0] for i in suggestions]
+        #print(suggestions)
+        #print(json.dumps(availableTags))
+        resp.media = suggestions
+        resp.media_handler = json_handler
+
+
+
+street_search = StreetSearch()
+app.add_route("/addresssearch", street_search)
+
+
 
 class ProductionResource:
     def on_get(self, req, resp):
@@ -91,11 +123,12 @@ class ProductionResource:
                 pass
         resp.media = result_cache
         resp.media_handler = json_handler
-        # get_production_info_string(address)
+        get_production_info_string(address)
 
 
 prod_res = ProductionResource()
 app.add_route("/api/production/yearly", prod_res)
+
 
 
 spec = APISpec(
