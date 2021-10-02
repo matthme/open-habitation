@@ -3,6 +3,8 @@ import psycopg2 as pg
 import sqlalchemy
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import sys
+from pyproj import Transformer
+import numpy as np
 
 host = "0.0.0.0"
 port = "5434"
@@ -55,9 +57,16 @@ for filename, table_name in filenames.items():
     try:
         df = pd.read_csv('./data/ch.bfe.elektrizitaetsproduktionsanlagen/%s' %filename, index_col=0)
         print(df.head(1))
-        if filename=="ElectricityProductionPlant.csv": # create additional column CompleteAddress which combines street/nr/zipcode/municipality
+        if filename=="ElectricityProductionPlant.csv":
+            # create additional column CompleteAddress which combines street/nr/zipcode/municipality
             df["CompleteAddress"] = df["Address"] + ", " + df["PostCode"].astype(str) + " " + df["Municipality"]
-            print("Added column 'CompleteAddress':")
+            
+            # transform from LV03 to wgs84
+            transformer = Transformer.from_crs('EPSG:2056', 'EPSG:4326')
+            df["_x_wgs84"] = df.apply(lambda x: transformer.transform(x._x, x._y)[0], axis=1)
+            df["_y_wgs84"] = df.apply(lambda x: transformer.transform(x._x, x._y)[1], axis=1)
+            df = df.replace(np.inf, np.nan)
+            print("Added columns 'CompleteAddress', '_x_wgs84' and '_y_wgs84':")
             print(df.head(1))
         df.to_sql(table_name, engine, if_exists="fail")
         print("Written to table '%s'" %table_name)

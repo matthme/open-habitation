@@ -105,20 +105,6 @@
     }
 
     $('#address').parent().submit(refresh);
-
-    // When ENTER is hit in the address field, the get request is sent:
-    // $("#address").keypress(function(e) {
-    //   if(e.which == 13) {
-    //     $.get('/api/production/yearly', {}, populate, 'json');
-    //     //alert('You pressed enter!');
-    //   //$("#search_button").click();
-    //   }
-    // });
-
-
-    // function search() {
-    //   $.get('/api/production/yearly', {}, populate, 'json');
-    // }
     
     $("#address").autocomplete({
       source: "addresssearch",
@@ -126,47 +112,6 @@
     });
 
   });
-
-
-// $(function () {
-
-//   function populate(data) {
-//       $results = $('#results tbody').empty();
-//       $thead = $('#results thead th');
-//       $(data).each(function () {
-//           var line = '<tr>';
-//           var row = this;
-//           $thead.each(function () {
-//             ref = $(this).data('col');
-//             line += '<td>' + row[ref] + '</td>';
-//           })
-//           $results.append(line + '</tr>');
-//       });
-//   }
-
-
-//   function refresh(e) {
-//     e.stopPropagation();
-//     search = $('#search').val();
-//     if (search.length > 3) {
-//         $.post('/api/production/yearly', {address: search}, populate, 'json');
-//     }
-//     return false;
-//   }
-
-//   $('#search').parent().submit(refresh);
-
-//   $.get('/api/production/yearly', {}, populate, 'json');
-
-// });
-
-
-// $( function() {
-//   $( "#address" ).autocomplete({
-//     source: "addresssearch",
-//     minLength: 2
-//   });
-// } );
 
 </script>
 
