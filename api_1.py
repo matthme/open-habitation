@@ -99,6 +99,7 @@ class ProductionResource:
                 description: JSON blob
         """
         obj = req.get_media()
+        print("Address POSTED!!")
         print(req)
         print(type(req))
         print(obj)
