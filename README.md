@@ -1,6 +1,6 @@
 # Open Habitation API
 
-This is a project started at the [Energy Data Hackdays 2021](https://energydatahackdays.ch/). Please see our [project page](https://hack.opendata.ch/project/779) for background.
+This is a project started at the [Energy Data Hackdays 2021](https://energydatahackdays.ch/). Please see our [project page](https://hack.opendata.ch/project/779) for background and have fun.
 
 ## Service
 
