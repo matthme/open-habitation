@@ -5,6 +5,10 @@ yarn.lock
 .flaskenv
 coverage.xml
 
+# .csv files
+*.csv
+
+
 # C extensions
 *.so
 
