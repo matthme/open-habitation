@@ -19,7 +19,7 @@
 <header>
     <h1>Open Habitation</h1>
     <p>Swiss open habitation API</p>
-    <p style="color:#FF0000">Please note: This basic example shows the expected annual energy production of a 1 kWp PV system at a specific site with slope 35° and aspect 60° (west - south-west). <hr/> The example is just valid for buildings with an existing PV system. </p>
+    <p style="color:#FF0000">Please note: This basic example shows the expected annual energy production of a 1 kWp PV system at a specific site with slope 35° and aspect 60° (west - south-west). This example is just valid for buildings with an existing PV system. </p>
 </header>
 
 <article>
@@ -39,8 +39,11 @@
         <tr>
           <th scope="col" data-col="id">#</th>
           <th scope="col" data-col="address">Address</th>
-          <th scope="col" data-col="yearly_production">Production (annual)</th>
-          <th scope="col" data-col="category">Category</th>
+          <th scope="col" data-col="category">Photovoltaics </th>
+          <th scope"col" data-col="total_power">PV Peak Power [kWp]</th>
+          <th scope"col" data-col="angle">PV Angle [°]</th> 
+          <th scope"col" data-col="aspect">PV Aspect [°]</th> 
+          <th scope="col" data-col="yearly_production">PV Expected Annual Energy Production [kWh/a]</th>        
           <th scope="col" data-col="eco_rating">Eco Rating</th>
         </tr>
       </thead>
