@@ -120,12 +120,11 @@ def get_pv_gis_data_old(coordinate_x, coordinate_y):
     return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
 
 
-def get_pv_gis_data(lat, lon):
-    peakpower = 1
-    loss = 14
-    mountingplace = 'free'
-    angle = 35
-    aspect = 60
+def get_pv_gis_data(lat, lon, peakpower=1, loss=14, mountingplace="frees", angle=35, aspect=60):
+
+    # loss: float between 0 and 100
+    # mountingplace can be one of ["free", "building"] 
+    # aspect must be between -180 and 180, where 0 is South, -90 is East and 90 is West
 
     # if no lat/lon in database, take lat/lon of Bern
     if lat==None:
@@ -143,7 +142,10 @@ def get_pv_gis_data(lat, lon):
           '&aspect=' + str(aspect) + \
           '&outputformat=json'
 
-    return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
+    try:
+        return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
+    except Exception:
+        return None
 
 def yearly_production_old(street, nr=None, zipcode=None, city=None):
     try:
