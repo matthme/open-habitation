@@ -63,10 +63,10 @@ for filename, table_name in filenames.items():
             
             # transform from LV03 to wgs84
             transformer = Transformer.from_crs('EPSG:2056', 'EPSG:4326')
-            df["_x_wgs84"] = df.apply(lambda x: transformer.transform(x._x, x._y)[0], axis=1)
-            df["_y_wgs84"] = df.apply(lambda x: transformer.transform(x._x, x._y)[1], axis=1)
+            df["lat"] = df.apply(lambda x: transformer.transform(x._x, x._y)[0], axis=1)
+            df["lon"] = df.apply(lambda x: transformer.transform(x._x, x._y)[1], axis=1)
             df = df.replace(np.inf, np.nan)
-            print("Added columns 'CompleteAddress', '_x_wgs84' and '_y_wgs84':")
+            print("Added columns 'CompleteAddress', 'lat' and 'lon':")
             print(df.head(1))
         df.to_sql(table_name, engine, if_exists="fail")
         print("Written to table '%s'" %table_name)

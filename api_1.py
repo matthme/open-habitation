@@ -1,3 +1,4 @@
+from typing import Literal
 from api_prototype import *
 import falcon
 import json
@@ -12,6 +13,7 @@ from apispec import APISpec
 from swagger_ui import falcon_api_doc
 
 import psycopg2 as pg
+from psycopg2 import sql
 
 host = "0.0.0.0"
 port = "5434"
@@ -20,7 +22,6 @@ username = "testuser"
 password = "test123"
 
 connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
-
 
 app = application = falcon.App()
 
@@ -45,14 +46,15 @@ class ElectricityProduction():
             [description]
         """
 
-class StreetSearch():
+class AddressSearch():
 
     def on_get(self, req, resp):
 
         #print("received get request on /addresssearch")
         #print(req.params["term"])
+        pattern = req.params["term"]+"%%"
         cursor = connection.cursor()
-        cursor.execute("select \"CompleteAddress\" from electricity_production where \"CompleteAddress\" ilike '%s%%' order by \"Address\" limit 8" %req.params["term"])
+        cursor.execute("select \"CompleteAddress\" from electricity_production where \"CompleteAddress\" ilike %(ilike)s order by \"Address\" limit 10" , {"ilike":pattern})
         suggestions = cursor.fetchall()
         suggestions = [i[0] for i in suggestions]
         #print(suggestions)
@@ -62,7 +64,7 @@ class StreetSearch():
 
 
 
-street_search = StreetSearch()
+street_search = AddressSearch()
 app.add_route("/addresssearch", street_search)
 
 
