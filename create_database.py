@@ -5,12 +5,16 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import sys
 from pyproj import Transformer
 import numpy as np
+import dotenv
+import os
 
-host = "0.0.0.0"
-port = "5434"
-database="postgres"
-username = "testuser"
-password = "test123"
+dotenv.load_dotenv()
+
+host = os.getenv("POSTGRES_HOST")
+port = os.getenv("POSTGRES_PORT")
+username = os.getenv("POSTGRES_USER")
+password = os.getenv("POSTGRES_PASSWORD")
+database = username
 
 
 # ------------------------------------------------------------------------------------------------

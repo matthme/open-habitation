@@ -5,6 +5,9 @@ yarn.lock
 .flaskenv
 coverage.xml
 
+# SECRETS
+.env
+
 # .csv files
 *.csv
 
