@@ -1,5 +1,5 @@
 from typing import Literal
-from api_prototype import *
+from api_helpers import *
 import falcon
 import json
 import functools
@@ -99,33 +99,30 @@ class ProductionResource:
             200:
                 description: JSON blob
         """
-        obj = req.get_media()
-        print("Address POSTED!!")
-        print(req)
-        print(type(req))
-        print(obj)
-        print(type(obj))
-        address = obj.get('address').strip()
-        print(obj["address"])
-        print(obj.get("address"))
-        print(type(obj.get("address")))
-        print(address)
-        print(type(address))
+        query = req.get_media()
+        print(query.keys())
+        # query = {}
+        # query["address"] = obj.get('address').strip()
+        # query["angle"] = obj.get('angle')
+        # query["aspect"] = obj.get('aspect')
+        # query["mountingplace"] = obj.get('mountingplace')
+
         data = None
         for r in result_cache:
-            if r['address'] == address:
+            if r['address']==query['address'] and r['angle']==query['angle'] and r['aspect']==query['aspect'] and r['mountingplace']==query['mountingplace']:
                 data = r
         if data is None:
-            data = calculate_results(address)
+            data = calculate_results(query)
             if data is not None:
                 data['id'] = len(result_cache) + 1
                 result_cache.append(data)
             else:
                 # TODO: throw 404 error
-                pass
+                resp.status = falcon.HTTP_404
+                resp.text = "No data found for that address."
+
         resp.media = result_cache
         resp.media_handler = json_handler
-        get_production_info_string(address)
 
 
 prod_res = ProductionResource()

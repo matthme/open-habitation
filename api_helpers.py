@@ -33,7 +33,19 @@ connection = pg.connect(database=database, user=username, password=password, hos
 #     lat = result[0][14]
 #     lon = result[0][15]
 
-    
+# ---------------------------------------------
+# FROM DATABASE
+
+def get_electricity_production_row(CompleteAddress):
+
+    cursor = connection.cursor()
+    cursor.execute("select * from electricity_production where \"CompleteAddress\"=%s", (CompleteAddress, ))
+    result = cursor.fetchall()
+    if len(result)==0:
+        return None
+    else:
+        return result[0]
+
 def get_total_power(CompleteAddress):
 
     cursor = connection.cursor()
@@ -66,7 +78,6 @@ def get_plant_type(CompleteAddress):
         out_dict["en"] = result[0][4]
         return out_dict
 
-
 def get_coordinates(CompleteAddress):
 
     cursor = connection.cursor()
@@ -80,19 +91,114 @@ def get_coordinates(CompleteAddress):
     return lat, lon
 
 
-def get_production_info_string(searchText):
-    url = "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.bfe.elektrizitaetsproduktionsanlagen&searchText=%s&searchField=address&contains=true" % (
-        searchText)
-    return requests.get(url)
+
+# ---------------------------------------------
+# FROM EXTERNAL API
+
+def get_pv_gis_data(lat, lon, peakpower, loss, mountingplace, angle, aspect):
+
+    # loss: float between 0 and 100
+    # mountingplace can be one of ["free", "building"] 
+    # aspect must be between -180 and 180, where 0 is South, -90 is East and 90 is West
+
+    # if no lat/lon in database, take lat/lon of Bern
+    if lat==None:
+        lat = 46.94809
+    if lon==None:
+        lon = 7.44744
+    if peakpower==None:
+        peakpower=1
+    if loss==None:
+        loss=14
+    if mountingplace==None:
+        mountingplace="free"
+    if angle==None:
+        angle=35
+    if aspect==None:
+        aspect=60
+
+    url = 'https://re.jrc.ec.europa.eu/api/PVcalc?' + \
+          'lat=' + str(lat) + \
+          '&lon=' + str(lon) + \
+          '&peakpower=' + str(peakpower) + \
+          '&loss=' + str(loss) + \
+          '&mountingplace=' + mountingplace + \
+          '&angle=' + str(angle) + \
+          '&aspect=' + str(aspect) + \
+          '&outputformat=json'
+
+    try:
+        return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
+    except Exception:
+        return None
+
+def yearly_production(lat, lon, plant_type, peakpower=1, loss=14, mountingplace="free", angle=35, aspect=60):
+
+    if plant_type["en"] == "Photovoltaic":
+        return get_pv_gis_data(lat, lon, peakpower=peakpower, loss=loss, mountingplace=mountingplace, angle=angle, aspect=aspect)
+    else:
+        return None
+
+def calculate_rating(yearly_production=None):
+    if yearly_production is None:
+        return 'G'
+    if yearly_production < 5000:
+        return 'E'
+    else:
+        return 'A'
 
 
-def get_production_info(street, nr, zipcode, city):
-    searchText = street + " " + str(nr) + ", " + str(zipcode) + " " + city
-    return get_production_info_string(searchText)
+
+def calculate_results(query):
+
+    CompleteAddress = query["address"]
+    angle = query["angle"]
+    aspect = query["aspect"]
+    mountingplace = query["mountingplace"]
+    #loss = query["loss"]
+    loss = 14 # default value at the moment
+
+    if get_electricity_production_row(CompleteAddress) == None: # if no data for this address in the database
+        return None
+    else:
+        peakpower = get_total_power(CompleteAddress)
+        plant_type = get_plant_type(CompleteAddress)
+        lat, lon = get_coordinates(CompleteAddress)
+
+        output = {}
+        output['address'] = CompleteAddress
+        output['yearly_production'] = yearly_production(lat, lon, plant_type, peakpower=peakpower, loss=loss, mountingplace=mountingplace, angle=angle, aspect=aspect)
+        output['eco_rating'] = calculate_rating(output['yearly_production'])
+        output['category'] = plant_type["en"]
+        output['total_power'] = peakpower
+        output['angle'] = angle
+        output['aspect'] = aspect
+        output['mountingplace'] = mountingplace
+
+        return output
 
 
-def get_sub_category(response_json):
-    return response_json["attributes"]["sub_category_en"]
+
+
+
+
+
+# ----------------------------------------------------------------------------------
+# OLD STUFF
+
+# def get_production_info_string(searchText):
+#     url = "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.bfe.elektrizitaetsproduktionsanlagen&searchText=%s&searchField=address&contains=true" % (
+#         searchText)
+#     return requests.get(url)
+
+
+# def get_production_info(street, nr, zipcode, city):
+#     searchText = street + " " + str(nr) + ", " + str(zipcode) + " " + city
+#     return get_production_info_string(searchText)
+
+
+# def get_sub_category(response_json):
+#     return response_json["attributes"]["sub_category_en"]
 
 
 def get_pv_gis_data_old(coordinate_x, coordinate_y):
@@ -118,34 +224,6 @@ def get_pv_gis_data_old(coordinate_x, coordinate_y):
           '&outputformat=json'
 
     return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
-
-
-def get_pv_gis_data(lat, lon, peakpower=1, loss=14, mountingplace="frees", angle=35, aspect=60):
-
-    # loss: float between 0 and 100
-    # mountingplace can be one of ["free", "building"] 
-    # aspect must be between -180 and 180, where 0 is South, -90 is East and 90 is West
-
-    # if no lat/lon in database, take lat/lon of Bern
-    if lat==None:
-        lat = 46.94809
-    if lon==None:
-        lon = 7.44744
-
-    url = 'https://re.jrc.ec.europa.eu/api/PVcalc?' + \
-          'lat=' + str(lat) + \
-          '&lon=' + str(lon) + \
-          '&peakpower=' + str(peakpower) + \
-          '&loss=' + str(loss) + \
-          '&mountingplace=' + mountingplace + \
-          '&angle=' + str(angle) + \
-          '&aspect=' + str(aspect) + \
-          '&outputformat=json'
-
-    try:
-        return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
-    except Exception:
-        return None
 
 def yearly_production_old(street, nr=None, zipcode=None, city=None):
     try:
@@ -177,50 +255,13 @@ def yearly_production_old(street, nr=None, zipcode=None, city=None):
         return None
 
 
-def yearly_production(CompleteAddress):
-
-    plant_type = get_plant_type(CompleteAddress)
-    lat, lon = get_coordinates(CompleteAddress)
-
-    if plant_type["en"] == "Photovoltaic":
-        return get_pv_gis_data(lat, lon)
-    else:
-        return None
-
-def calculate_rating(yearly_production=None):
-    if yearly_production is None:
-        return 'G'
-    if yearly_production < 5000:
-        return 'E'
-    else:
-        return 'A'
-
-
-def calculate_results(searchText):
-    output = {}
-    output['address'] = searchText
-    output['yearly_production'] = yearly_production(searchText)
-    output['eco_rating'] = calculate_rating(output['yearly_production'])
-
-    try:
-        response = get_production_info_string(searchText)
-        result_data = response.json()["results"]
-        if len(result_data) == 0:
-            # No address found
-            return None
-        output['category'] = get_sub_category(result_data[0])
-        output['total_power'] = result_data[0]["attributes"]["total_power"]
-    except:
-        output['category'] = 'no data'
-        output['total_power'] = -1
-
-    return output
-
 
 if __name__=="__main__":
 
     address = "Hallenbadweg 15, 8610 Uster"
     # address = "Schlossstrasse 15, 4147 Aesch BL"
+    row = get_electricity_production_row(address)
+    print("ROW: ", row)
     total_power = get_total_power(address)
     print(type(total_power))
     print(total_power)

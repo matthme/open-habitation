@@ -30,7 +30,6 @@
 <header>
     <h1>Open Habitation</h1>
     <p>Swiss open habitation API</p>
-    <p style="color:#FF0000">Please note: This basic example shows the expected annual energy production of a 1 kWp PV system at a specific site with slope 35° and aspect 60° (west - south-west). This example is just valid for buildings with an existing PV system. </p>
 </header>
 <article>
     <h3>Basic Example</h3>
@@ -39,7 +38,16 @@
     <div class="ui-widget station">
       <form>
         <input class="form-control" id="address" placeholder="Streetname nr, zipcode city" onchange=search()/>
+        <input class="form-control" id="angle" placeholder="PV angle (optional), between 0-90, default 35" onchange=search()/>
+        <input class="form-control" id="aspect" placeholder="PV orientation (optional), between -180 and 180, default 60" onchange=search()/>
+        <label for="mountingplace">Mountingplace:</label>
+        <select name="mountingplace" id="mountingplace">
+          <option value="free">free-standing</option>
+          <option value="building">building-integrated</option>
+        </select>
       </form>
+      <p style="color:#FF0000", id="search_error"></p>
+      <button type="button", id="search_button">Search!</button>
     </div>
     <div class="media">
     </div>
@@ -49,11 +57,12 @@
         <tr>
           <th scope="col" data-col="id">#</th>
           <th scope="col" data-col="address">Address</th>
-          <th scope="col" data-col="category">Photovoltaics </th>
+          <th scope="col" data-col="category">Photovoltaics</th>
           <th scope="col" data-col="total_power">PV Peak Power [kWp]</th>
           <th scope="col" data-col="angle">PV Angle [°]</th> 
-          <th scope="col" data-col="aspect">PV Aspect [°]</th> 
-          <th scope="col" data-col="yearly_production">PV Expected Annual Energy Production [kWh/a]</th>        
+          <th scope="col" data-col="aspect">PV Aspect [°]</th>
+          <th scope="col" data-col="mountingplace">Mounting Place</th>        
+          <th scope="col" data-col="yearly_production">PV Expected Annual\n Energy Production [kWh/a]</th>        
           <th scope="col" data-col="eco_rating">Eco Rating</th>
         </tr>
       </thead>
@@ -92,22 +101,44 @@
               ref = $(this).data('col');
               line += '<td>' + row[ref] + '</td>';
             })
-            $results.append(line + '</tr>');
+            $results.prepend(line + '</tr>');
         });
     }
 
 
-    function refresh(e) {
-      e.stopPropagation();
-      search = $('#address').val();
-      if (search.length > 3) {
-          $.post('/api/production/yearly', {address: search}, populate, 'json');
-          $('#address').val('')
-      }
-      return false;
-    }
+    // function refresh(e) {
+    //   e.stopPropagation();
+    //   search = $('#address').val();
+    //   if (search.length > 3) {
+    //       $.post('/api/production/yearly', {address: search}, populate, 'json');
+    //       $('#address').val('')
+    //   }
+    //   return false;
+    // }
 
-    $('#address').parent().submit(refresh);
+    function postSearchRequest() {
+      $('#search_error').text('');
+      let address = $('#address').val();
+      let angle = $('#angle').val();
+      let aspect = $('#aspect').val();
+      let mountingplace = $('#mountingplace').val();
+
+      if ((angle < 0) || (angle > 90) || (isNaN(parseInt(angle)))) {
+        $('#search_error').text("PV angle must be a number between 0 and 90.");
+        return
+      } else if ((aspect < -180) || (aspect > 180) || (isNaN(parseInt(aspect)))) {
+        $('#search_error').text("PV orientation (aspect) must be a number between -180 and 180.");
+        return
+      };
+
+      $.post('api/production/yearly', {address: address, angle: angle, aspect: aspect, mountingplace: mountingplace}, populate, 'json')
+      .fail(function(response) {
+          $('#search_error').text(response.responseText);
+      });
+      };
+
+    $("#search_button").on('click', postSearchRequest);
+
     
     $("#address").autocomplete({
       source: "addresssearch",
