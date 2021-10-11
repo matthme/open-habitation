@@ -10,11 +10,14 @@ import os
 
 dotenv.load_dotenv()
 
-host = os.getenv("POSTGRES_HOST")
-port = os.getenv("POSTGRES_PORT")
-username = os.getenv("POSTGRES_USER")
-password = os.getenv("POSTGRES_PASSWORD")
-database = username
+# host = os.getenv("POSTGRES_HOST")
+# port = os.getenv("POSTGRES_PORT")
+# username = os.getenv("POSTGRES_USER")
+# password = os.getenv("POSTGRES_PASSWORD")
+# database = username
+
+# taylored for heroku deployment:
+DATABASE_URL = os.environ['DATABASE_URL']
 
 
 # ------------------------------------------------------------------------------------------------
@@ -23,7 +26,8 @@ database = username
 new_database = "geo_admin"
 
 try:
-    connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+    # connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+    connection = pg.connect(DATABASE_URL, sslmode='require') # for heroku deployment
     connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cursor = connection.cursor()
     #cursor.execute("CREATE TABLE test (id bigserial, name varchar(10))")
@@ -48,10 +52,13 @@ except pg.errors.DuplicateDatabase:
 # ------------------------------------------------------------------------------------------------
 # Adding all the tables from csv files
 
-engine = sqlalchemy.create_engine('postgresql+psycopg2://%s:%s@%s:%s/%s' %(username, password, host, port, new_database))
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL_SQLALCHEMY = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+else:
+    DATABASE_URL_SQLALCHEMY = DATABASE_URL
 
-# df_test = pd.DataFrame({"col1":[1,2,3,4], "col2":[4,3,2,1]})
-# df_test.to_sql("test_table", engine)
+engine = sqlalchemy.create_engine(DATABASE_URL_SQLALCHEMY)
+
 
 filenames = {"ElectricityProductionPlant.csv":"electricity_production", "MainCategoryCatalogue.csv":"main_category", "OrientationCatalogue.csv":"orientation",\
                 "PlantCategoryCatalogue.csv":"plant_category", "PlantDetail.csv":"plant_detail", "SubCategoryCatalogue.csv":"sub_category"}

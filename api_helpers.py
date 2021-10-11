@@ -1,14 +1,12 @@
 import requests
 from pyproj import Transformer
 import psycopg2 as pg
+import os
 
-host = "0.0.0.0"
-port = "5434"
-database="geo_admin"
-username = "testuser"
-password = "test123"
 
-connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+# database connection taylored for heroku deployment:
+DATABASE_URL = os.environ['DATABASE_URL']
+connection = pg.connect(DATABASE_URL, sslmode='require')
 
 
 # def get_production_info(CompleteAddress):

@@ -1,0 +1,8 @@
+setup:
+  addons:
+    - plan: heroku-postgresql
+    as: DATABASE
+release:
+  command:
+    - python3 download_production_data.py
+    - python3 create_database.py

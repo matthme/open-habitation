@@ -3,6 +3,7 @@ from api_helpers import *
 import falcon
 import json
 import functools
+import os
 
 from pathlib import Path
 from falcon import media
@@ -15,13 +16,10 @@ from swagger_ui import falcon_api_doc
 import psycopg2 as pg
 from psycopg2 import sql
 
-host = "0.0.0.0"
-port = "5434"
-database="geo_admin"
-username = "testuser"
-password = "test123"
 
-connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+# database connection taylored for heroku deployment:
+DATABASE_URL = os.environ['DATABASE_URL']
+connection = pg.connect(DATABASE_URL, sslmode='require')
 
 app = application = falcon.App()
 
