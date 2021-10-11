@@ -55,7 +55,6 @@
     <table class="table" id="results">
       <thead>
         <tr>
-          <th scope="col" data-col="id">#</th>
           <th scope="col" data-col="address">Address</th>
           <th scope="col" data-col="category">Photovoltaics</th>
           <th scope="col" data-col="total_power">PV Peak Power [kWp]</th>
@@ -123,10 +122,10 @@
       let aspect = $('#aspect').val();
       let mountingplace = $('#mountingplace').val();
 
-      if ((angle < 0) || (angle > 90) || (isNaN(parseInt(angle)))) {
+      if ((angle != null) && (angle < 0) || (angle > 90) || (isNaN(parseInt(angle)))) {
         $('#search_error').text("PV angle must be a number between 0 and 90.");
         return
-      } else if ((aspect < -180) || (aspect > 180) || (isNaN(parseInt(aspect)))) {
+      } else if ((aspect != null) && (aspect < -180) || (aspect > 180) || (isNaN(parseInt(aspect)))) {
         $('#search_error').text("PV orientation (aspect) must be a number between -180 and 180.");
         return
       };

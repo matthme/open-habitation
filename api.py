@@ -112,12 +112,15 @@ class ProductionResource:
         if data is None:
             data = calculate_results(query)
             if data is not None:
-                data['id'] = len(result_cache) + 1
+                #data['id'] = len(result_cache) + 1
                 result_cache.append(data)
             else:
                 # TODO: throw 404 error
                 resp.status = falcon.HTTP_404
                 resp.text = "No data found for that address."
+
+        if len(result_cache) > 20:
+            result_cache = result_cache[:20]
 
         resp.media = result_cache
         resp.media_handler = json_handler
