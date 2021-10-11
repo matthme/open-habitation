@@ -21,31 +21,31 @@ DATABASE_URL = os.environ['DATABASE_URL']
 
 
 # ------------------------------------------------------------------------------------------------
-# Try creating the database if it doesn't exist already
+# Try creating the database if it doesn't exist already <-- NOT REQUIRED FOR HEROKU
 
-new_database = "geo_admin"
+# new_database = "geo_admin"
 
-try:
-    # connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
-    connection = pg.connect(DATABASE_URL, sslmode='require') # for heroku deployment
-    connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cursor = connection.cursor()
-    #cursor.execute("CREATE TABLE test (id bigserial, name varchar(10))")
-    cursor.execute("CREATE DATABASE %s" %new_database)
-    cursor.close()
-    connection.close()
-    print("Created database '%s'" %new_database)
-except pg.errors.DuplicateDatabase:
-    while True:
-        confirmation = input("Database '%s' already exists. Do you want to continue (y/n)?" %new_database)
-        if confirmation=="y" or confirmation=="Y":
-            break
-        elif confirmation=="n" or confirmation=="N":
-            print("Database set-up aborted.")
-            sys.exit()
-        else:
-            continue
-    pass
+# try:
+#     # connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+#     connection = pg.connect(DATABASE_URL, sslmode='require') # for heroku deployment
+#     connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+#     cursor = connection.cursor()
+#     #cursor.execute("CREATE TABLE test (id bigserial, name varchar(10))")
+#     cursor.execute("CREATE DATABASE %s" %new_database)
+#     cursor.close()
+#     connection.close()
+#     print("Created database '%s'" %new_database)
+# except pg.errors.DuplicateDatabase:
+#     while True:
+#         confirmation = input("Database '%s' already exists. Do you want to continue (y/n)?" %new_database)
+#         if confirmation=="y" or confirmation=="Y":
+#             break
+#         elif confirmation=="n" or confirmation=="N":
+#             print("Database set-up aborted.")
+#             sys.exit()
+#         else:
+#             continue
+#     pass
 
 
 
