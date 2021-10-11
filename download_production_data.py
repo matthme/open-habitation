@@ -6,7 +6,7 @@ filehandle, _ = urllib.request.urlretrieve(url)
 zip_file_object = zipfile.ZipFile(filehandle, 'r')
 
 for filename in zip_file_object.namelist():
-    zip_file_object.extract(filename, path="./data")
+    zip_file_object.extract(filename, path="./data/ch.bfe.elektrizitaetsproduktionsanlagen")
     print("Extracted: ", filename)
 
 
