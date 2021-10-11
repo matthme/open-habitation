@@ -83,17 +83,23 @@ for filename, table_name in filenames.items():
         print("Written to table '%s'" %table_name)
     except ValueError as e:
         if str(e) == "Table '%s' already exists." %table_name:
-            while True:
-                answer = input("Table '%s' already exists. Do wou want to overwrite it (o) or skip it (s)?" %table_name)
-                if answer=="o" or answer=="O":
-                    print("writing to table...")
-                    df.to_sql(table_name, engine, if_exists="replace")
-                    break
-                elif answer=="s" or answer=="S":
-                    break
-                else:
-                    continue
-            pass
+            
+            # always overwrite on heroku:
+            print("writing to table...")
+            df.to_sql(table_name, engine, if_exists="replace")
+
+            # on own server, this might be the more appropriate approach:
+            # while True:
+            #     answer = input("Table '%s' already exists. Do wou want to overwrite it (o) or skip it (s)?" %table_name)
+            #     if answer=="o" or answer=="O":
+            #         print("writing to table...")
+            #         df.to_sql(table_name, engine, if_exists="replace")
+            #         break
+            #     elif answer=="s" or answer=="S":
+            #         break
+            #     else:
+            #         continue
+            # pass
         else:
             raise e
 
