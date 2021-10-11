@@ -122,10 +122,17 @@
       let aspect = $('#aspect').val();
       let mountingplace = $('#mountingplace').val();
 
-      if ((angle.length != 0) && (angle < 0) || (angle > 90) || (isNaN(parseInt(angle)))) {
+      if (angle.length == 0) {
+        angle = "35"
+      }
+      if (aspect.length == 0) {
+        aspect = "60"
+      }
+
+      if ((angle < 0) || (angle > 90) || (isNaN(parseInt(angle)))) {
         $('#search_error').text("PV angle must be a number between 0 and 90.");
         return
-      } else if ((aspect.length != 0) && (aspect < -180) || (aspect > 180) || (isNaN(parseInt(aspect)))) {
+      } else if ((aspect < -180) || (aspect > 180) || (isNaN(parseInt(aspect)))) {
         $('#search_error').text("PV orientation (aspect) must be a number between -180 and 180.");
         return
       };

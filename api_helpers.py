@@ -2,11 +2,25 @@ import requests
 from pyproj import Transformer
 import psycopg2 as pg
 import os
+import dotenv
+
+dotenv.load_dotenv()
 
 
-# database connection taylored for heroku deployment:
-DATABASE_URL = os.environ['DATABASE_URL']
-connection = pg.connect(DATABASE_URL, sslmode='require')
+local_database = os.getenv("LOCAL_DATABASE")
+
+if local_database=="true":
+    host = os.getenv("POSTGRES_HOST")
+    port = os.getenv("POSTGRES_PORT")
+    username = os.getenv("POSTGRES_USER")
+    password = os.getenv("POSTGRES_PASSWORD")
+    database = "geo_admin"
+
+    connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+else:
+    # database connection taylored for heroku deployment:
+    DATABASE_URL = os.environ['DATABASE_URL']
+    connection = pg.connect(DATABASE_URL, sslmode='require')
 
 
 # def get_production_info(CompleteAddress):
@@ -155,6 +169,7 @@ def calculate_results(query):
     mountingplace = query["mountingplace"]
     #loss = query["loss"]
     loss = 14 # default value at the moment
+
 
     if get_electricity_production_row(CompleteAddress) == None: # if no data for this address in the database
         return None
