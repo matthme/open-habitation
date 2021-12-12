@@ -1,5 +1,4 @@
-from typing import Literal
-from api_helpers import *
+import api_helpers as ah
 import falcon
 import json
 import functools
@@ -20,6 +19,8 @@ import dotenv
 dotenv.load_dotenv()
 
 
+# create database connection
+# -----------------------------------------------------------------------------------------------------
 local_database = os.getenv("LOCAL_DATABASE")
 
 if local_database=="true":
@@ -34,6 +35,8 @@ else:
     # database connection taylored for heroku deployment:
     DATABASE_URL = os.environ['DATABASE_URL']
     connection = pg.connect(DATABASE_URL, sslmode='require')
+# -----------------------------------------------------------------------------------------------------
+
 
 app = application = falcon.App()
 
@@ -47,8 +50,10 @@ result_cache = []
 
 
 
-
 class AddressSearch():
+    """
+    Providing address suggestions based on pattern matching
+    """
 
     def on_get(self, req, resp):
 
@@ -65,13 +70,19 @@ class AddressSearch():
         resp.media_handler = json_handler
 
 
-
-street_search = AddressSearch()
-app.add_route("/addresssearch", street_search)
-
+SearchAddress = AddressSearch()
+app.add_route("/api/addresssearch", SearchAddress)
 
 
-class ProductionResource:
+
+class ProductionResource():
+    """
+    Getting information of electricity production for a specific address
+    """
+
+    def __init__(self) -> None:
+        pass
+
     def on_get(self, req, resp):
         """Handles GET requests
         ---
@@ -131,8 +142,18 @@ class ProductionResource:
         resp.media_handler = json_handler
 
 
-prod_res = ProductionResource()
-app.add_route("/api/production/yearly", prod_res)
+ProdRes = ProductionResource()
+app.add_route("/api/production/yearly", ProdRes)
+
+
+
+class HeatingResource():
+    def __init__(self) -> None:
+        pass
+
+
+HeatRes = HeatingResource()
+app.add_route("/api/heating", HeatRes)
 
 
 
@@ -143,7 +164,7 @@ spec = APISpec(
     plugins=[FalconPlugin(app)],
 )
 
-spec.path(resource=prod_res)
+spec.path(resource=ProdRes)
 
 # BUG! https://github.com/PWZER/swagger-ui-py/issues/29
 falcon_api_doc(app, config=spec.to_dict(), url_prefix='/api/doc/', title='API doc')
@@ -158,11 +179,15 @@ class IndexResource(object):
 
 
 app.add_route('/', IndexResource())
-app.add_route('/js/script.js', Path('./js/script.js').resolve())
-app.add_static_route('/public', Path('./public/').resolve())
+# app.add_route('/js/script.js', Path('./js/script.js').resolve())
+# app.add_static_route('/public', Path('./public/').resolve())
 
 
 if __name__ == '__main__':
     with make_server('', 8000, application) as httpd:
         print('Serving on http://localhost:8000')
         httpd.serve_forever()
+
+
+
+

@@ -110,7 +110,7 @@ def get_coordinates(CompleteAddress):
 def get_pv_gis_data(lat, lon, peakpower, loss, mountingplace, angle, aspect):
 
     # loss: float between 0 and 100
-    # mountingplace can be one of ["free", "building"] 
+    # mountingplace can be one of ["free", "building"]
     # aspect must be between -180 and 180, where 0 is South, -90 is East and 90 is West
 
     # if no lat/lon in database, take lat/lon of Bern
