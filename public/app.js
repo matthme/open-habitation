@@ -1,19 +1,93 @@
 import { getHouseInfo } from "./fetchers.js";
-const HOUSE_QUERY_URL = "../resources/houseinfo.json";
+const HOUSE_QUERY_BASE_URL = "/api/houseinfo";
 // console.log(new Date().toISOString());
 let rows = []; // rows of the table
 const buttonEl = document.querySelector("#search_button");
 const tbodyEl = document.querySelector("tbody");
+const formEl = document.querySelector("form");
+const searchErrorEl = document.getElementById("search_error");
 function houseQuery(e) {
-    // e.preventDefault();
-    getHouseInfo(HOUSE_QUERY_URL).then((info) => {
+    e.preventDefault();
+    let formData = new FormData(formEl);
+    console.log(formData.get("address"));
+    // check validity of parameters
+    let address = formData.get("address");
+    let angle_str = formData.get("angle");
+    let aspect_str = formData.get("aspect");
+    let angle;
+    let aspect;
+    let mountingplace = formData.get("mountingplace");
+    if (angle_str == "") {
+        angle = undefined;
+    }
+    else {
+        angle = Number(angle_str);
+    }
+    if (aspect_str == "") {
+        aspect = undefined;
+    }
+    else {
+        aspect = Number(aspect_str);
+    }
+    if (address === "") {
+        searchErrorEl.innerText = "Address field is required.";
+        return;
+    }
+    else if ((angle !== undefined) && ((angle < 0) || (angle > 90) || (isNaN(angle)))) {
+        searchErrorEl.innerText = "PV angle must be a number between 0 and 90.";
+        return;
+    }
+    else if ((aspect !== undefined) && ((aspect < -180) || (aspect > 180) || (isNaN(aspect)))) {
+        console.log("aspect: ", aspect);
+        searchErrorEl.innerText = "PV orientation (aspect) must be a number between -180 and 180.";
+        return;
+    }
+    else {
+        searchErrorEl.innerText = "";
+    }
+    ;
+    // compose query string
+    let queryString = `?address=${address}`;
+    if (true) {
+        queryString += `&angle=${angle}`;
+    }
+    if (true) {
+        queryString += `&aspect=${aspect}`;
+    }
+    if (true) {
+        queryString += `&mountingplace=${mountingplace}`;
+    }
+    let url = HOUSE_QUERY_BASE_URL + queryString;
+    // console.log("URL: ", url);
+    // console.log(formData.values());
+    // // console.log(form.getAll());
+    // console.log(formData.entries());
+    // console.log(formData.get("angle"));
+    // console.log(typeof formData.get("angle"));
+    // if(formData.get("angle")){
+    //     console.log("true")
+    // }
+    // console.log(formData.keys());
+    // for(var pair of formData.entries()){
+    //     if(pair[1]){
+    //         console.log(pair[0], pair[1])
+    //     } else {
+    //         console.log("No value entered for input", pair[0])
+    //     }
+    // }
+    // make get request to API
+    getHouseInfo(url).then((info) => {
         tbodyEl.innerHTML = "";
         if (rows.length >= 10) {
             rows.pop();
         }
         let newrow = "<tr>";
         Object.keys(info).forEach((k, i) => {
-            newrow += `<td>${info[k]}</td>`;
+            let value = info[k];
+            if (value === null) {
+                value = "-";
+            }
+            newrow += `<td>${value}</td>`;
         });
         newrow += "</tr>";
         rows.push(newrow);
@@ -21,7 +95,8 @@ function houseQuery(e) {
             tbodyEl.innerHTML += row;
         });
     }).catch(err => {
-        console.log("No info found for that house.");
+        console.log(err);
+        console.log("No info found for that address.");
     });
 }
 buttonEl.addEventListener("click", houseQuery);

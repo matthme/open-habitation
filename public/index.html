@@ -18,7 +18,7 @@
 			  crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="public/styles.css">
 
 </head>
 
@@ -37,9 +37,9 @@
 
     <div class="ui-widget station">
       <form>
-        <input class="form-control" id="address" placeholder="Streetname nr, zipcode city" onchange=search()/>
-        <input class="form-control" id="angle" placeholder="PV angle (optional), between 0-90, default 35" onchange=search()/>
-        <input class="form-control" id="aspect" placeholder="PV orientation (optional), between -180 and 180, default 60" onchange=search()/>
+        <input name="address" class="form-control" id="address" placeholder="Streetname nr, zipcode city"()/>
+        <input name="angle" class="form-control" id="angle" placeholder="PV angle (optional), between 0-90, default 35"/>
+        <input name="aspect" class="form-control" id="aspect" placeholder="PV orientation (optional), between -180 and 180, default 60"/>
         <label for="mountingplace">Mountingplace:</label>
         <select name="mountingplace" id="mountingplace">
           <option value="free">free-standing</option>
@@ -90,7 +90,18 @@
 </footer>
 
 
-<script type="module" src="app.js"></script>
+<script type="module" src="public/app.js"></script>
+
+<script>
+  $("document").ready(function() {
+
+    $("#address").autocomplete({
+      source: "api/addresssearch",
+      minLength: 2
+    });
+
+  });
+</script>
 
 </body>
 </html>

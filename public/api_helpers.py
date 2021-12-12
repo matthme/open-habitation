@@ -9,18 +9,18 @@ dotenv.load_dotenv()
 
 local_database = os.getenv("LOCAL_DATABASE")
 
-if local_database=="true":
-    host = os.getenv("POSTGRES_HOST")
-    port = os.getenv("POSTGRES_PORT")
-    username = os.getenv("POSTGRES_USER")
-    password = os.getenv("POSTGRES_PASSWORD")
-    database = "geo_admin"
+# if local_database=="true":
+#     host = os.getenv("POSTGRES_HOST")
+#     port = os.getenv("POSTGRES_PORT")
+#     username = os.getenv("POSTGRES_USER")
+#     password = os.getenv("POSTGRES_PASSWORD")
+#     database = "geo_admin"
 
-    connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
-else:
-    # database connection taylored for heroku deployment:
-    DATABASE_URL = os.environ['DATABASE_URL']
-    connection = pg.connect(DATABASE_URL, sslmode='require')
+#     connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+# else:
+#     # database connection taylored for heroku deployment:
+#     DATABASE_URL = os.environ['DATABASE_URL']
+#     connection = pg.connect(DATABASE_URL, sslmode='require')
 
 
 # def get_production_info(CompleteAddress):
