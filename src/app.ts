@@ -1,4 +1,4 @@
-import { getHouseInfo } from "./fetchers.js";
+import { getHouseInfo, syntaxHighlight } from "./fetchers.js";
 
 const HOUSE_QUERY_BASE_URL = "/api/houseinfo"
 
@@ -7,10 +7,10 @@ const HOUSE_QUERY_BASE_URL = "/api/houseinfo"
 let rows: string[] = []; // rows of the table
 
 const buttonEl = document.querySelector("#search_button")!;
-const tbodyEl = document.querySelector("tbody")!;
+// const tbodyEl = document.querySelector("tbody")!;
 const formEl = document.querySelector("form")!;
 const searchErrorEl = document.getElementById("search_error")!;
-
+const jsonDisplayEl = document.getElementById("json-display")!;
 
 function houseQuery(e: Event) {
     e.preventDefault();
@@ -24,25 +24,25 @@ function houseQuery(e: Event) {
     let aspect: number | undefined;
     let mountingplace = formData.get("mountingplace");
 
-    if(angle_str=="") {
+    if (angle_str == "") {
         angle = undefined;
     } else {
         angle = Number(angle_str);
     }
 
-    if(aspect_str=="") {
+    if (aspect_str == "") {
         aspect = undefined;
     } else {
         aspect = Number(aspect_str);
     }
 
-    if (address==="") {
+    if (address === "") {
         searchErrorEl.innerText = "Address field is required.";
         return
-    } else if ((angle!==undefined) && ((angle < 0) || (angle > 90) || (isNaN(angle)))) {
+    } else if ((angle !== undefined) && ((angle < 0) || (angle > 90) || (isNaN(angle)))) {
         searchErrorEl.innerText = "PV angle must be a number between 0 and 90.";
         return
-    } else if ((aspect!==undefined) && ((aspect < -180) || (aspect > 180) || (isNaN(aspect)))) {
+    } else if ((aspect !== undefined) && ((aspect < -180) || (aspect > 180) || (isNaN(aspect)))) {
         console.log("aspect: ", aspect);
         searchErrorEl.innerText = "PV orientation (aspect) must be a number between -180 and 180.";
         return
@@ -52,11 +52,11 @@ function houseQuery(e: Event) {
 
 
     // compose query string
-    let queryString : string = `?address=${address}`;
+    let queryString: string = `?address=${address}`;
 
     queryString += `&angle=${angle}`
     queryString += `&aspect=${aspect}`
-    queryString += `&mountingplace=${mountingplace}`
+    // queryString += `&mountingplace=${mountingplace}`
 
     let url: string = HOUSE_QUERY_BASE_URL + queryString;
 
@@ -81,31 +81,33 @@ function houseQuery(e: Event) {
     // }
 
     // make get request to API
-    getHouseInfo(url).then((info: { [key: string]: any } ) => {
+    getHouseInfo(url).then((info: { [key: string]: any }) => {
 
-        tbodyEl.innerHTML = "";
+        // console.log(JSON.stringify(info));
+        jsonDisplayEl.innerHTML = syntaxHighlight(JSON.stringify(info, null, 4));
+        // tbodyEl.innerHTML = "";
 
-        if (rows.length >= 10) {
-            rows.pop()
-        }
+        // if (rows.length >= 10) {
+        //     rows.pop()
+        // }
 
-        let newrow: string = "<tr>";
+        // let newrow: string = "<tr>";
 
-        Object.keys(info).forEach( (k, i) => {
-            let value = info[k]
-            if (value===null) {
-                value = "-"
-            }
-            newrow += `<td>${value}</td>`
-        })
+        // Object.keys(info).forEach((k, i) => {
+        //     let value = info[k]
+        //     if (value === null) {
+        //         value = "-"
+        //     }
+        //     newrow += `<td>${value}</td>`
+        // })
 
-        newrow += "</tr>";
+        // newrow += "</tr>";
 
-        rows.push(newrow);
+        // rows.push(newrow);
 
-        rows.forEach(row => {
-            tbodyEl.innerHTML += row;
-        })
+        // rows.forEach(row => {
+        //     tbodyEl.innerHTML += row;
+        // })
 
     }).catch(err => {
         console.log(err);

@@ -1,11 +1,12 @@
-import { getHouseInfo } from "./fetchers.js";
+import { getHouseInfo, syntaxHighlight } from "./fetchers.js";
 const HOUSE_QUERY_BASE_URL = "/api/houseinfo";
 // console.log(new Date().toISOString());
 let rows = []; // rows of the table
 const buttonEl = document.querySelector("#search_button");
-const tbodyEl = document.querySelector("tbody");
+// const tbodyEl = document.querySelector("tbody")!;
 const formEl = document.querySelector("form");
 const searchErrorEl = document.getElementById("search_error");
+const jsonDisplayEl = document.getElementById("json-display");
 function houseQuery(e) {
     e.preventDefault();
     let formData = new FormData(formEl);
@@ -48,15 +49,9 @@ function houseQuery(e) {
     ;
     // compose query string
     let queryString = `?address=${address}`;
-    if (true) {
-        queryString += `&angle=${angle}`;
-    }
-    if (true) {
-        queryString += `&aspect=${aspect}`;
-    }
-    if (true) {
-        queryString += `&mountingplace=${mountingplace}`;
-    }
+    queryString += `&angle=${angle}`;
+    queryString += `&aspect=${aspect}`;
+    // queryString += `&mountingplace=${mountingplace}`
     let url = HOUSE_QUERY_BASE_URL + queryString;
     // console.log("URL: ", url);
     // console.log(formData.values());
@@ -77,23 +72,25 @@ function houseQuery(e) {
     // }
     // make get request to API
     getHouseInfo(url).then((info) => {
-        tbodyEl.innerHTML = "";
-        if (rows.length >= 10) {
-            rows.pop();
-        }
-        let newrow = "<tr>";
-        Object.keys(info).forEach((k, i) => {
-            let value = info[k];
-            if (value === null) {
-                value = "-";
-            }
-            newrow += `<td>${value}</td>`;
-        });
-        newrow += "</tr>";
-        rows.push(newrow);
-        rows.forEach(row => {
-            tbodyEl.innerHTML += row;
-        });
+        // console.log(JSON.stringify(info));
+        jsonDisplayEl.innerHTML = syntaxHighlight(JSON.stringify(info, null, 4));
+        // tbodyEl.innerHTML = "";
+        // if (rows.length >= 10) {
+        //     rows.pop()
+        // }
+        // let newrow: string = "<tr>";
+        // Object.keys(info).forEach((k, i) => {
+        //     let value = info[k]
+        //     if (value === null) {
+        //         value = "-"
+        //     }
+        //     newrow += `<td>${value}</td>`
+        // })
+        // newrow += "</tr>";
+        // rows.push(newrow);
+        // rows.forEach(row => {
+        //     tbodyEl.innerHTML += row;
+        // })
     }).catch(err => {
         console.log(err);
         console.log("No info found for that address.");

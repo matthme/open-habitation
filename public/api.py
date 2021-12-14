@@ -22,21 +22,21 @@ dotenv.load_dotenv()
 
 # create database connection
 # -----------------------------------------------------------------------------------------------------
-# if True: # make code collapsable
-#     local_database = os.getenv("LOCAL_DATABASE")
+if True: # make code collapsable
+    local_database = os.getenv("LOCAL_DATABASE")
 
-#     if local_database=="true":
-#         host = os.getenv("POSTGRES_HOST")
-#         port = os.getenv("POSTGRES_PORT")
-#         username = os.getenv("POSTGRES_USER")
-#         password = os.getenv("POSTGRES_PASSWORD")
-#         database = "geo_admin"
+    if local_database=="true":
+        host = os.getenv("POSTGRES_HOST")
+        port = os.getenv("POSTGRES_PORT")
+        username = os.getenv("POSTGRES_USER")
+        password = os.getenv("POSTGRES_PASSWORD")
+        database = "openhabitation"
 
-#         connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
-#     else:
-#         # database connection taylored for heroku deployment:
-#         DATABASE_URL = os.environ['DATABASE_URL']
-#         connection = pg.connect(DATABASE_URL, sslmode='require')
+        connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+    else:
+        # database connection taylored for heroku deployment:
+        DATABASE_URL = os.environ['DATABASE_URL']
+        connection = pg.connect(DATABASE_URL, sslmode='require')
 # -----------------------------------------------------------------------------------------------------
 
 
@@ -60,12 +60,11 @@ class AddressSearch():
     def on_get(self, req, resp):
 
         print("request received")
-        return 0
         #print("received get request on /addresssearch")
         #print(req.params["term"])
         pattern = req.params["term"]+"%%"
         cursor = connection.cursor()
-        cursor.execute("select \"CompleteAddress\" from gwr where \"CompleteAddress\" ilike %(ilike)s order by \"Address\" limit 15" , {"ilike":pattern})
+        cursor.execute("select \"CompleteAddress\" from gwr where \"CompleteAddress\" ilike %(ilike)s order by \"CompleteAddress\" limit 15" , {"ilike":pattern})
         suggestions = cursor.fetchall()
         suggestions = [i[0] for i in suggestions]
         #print(suggestions)
@@ -97,15 +96,23 @@ class HouseInfoResource():
         address = req.params["address"]
         angle = req.params["angle"]
         aspect = req.params["aspect"]
-        mountingplace = req.params["mountingplace"]
+        # mountingplace = req.params["mountingplace"]
 
         if angle=="undefined":
             angle = None
         if aspect=="undefined":
             aspect = None
 
-        output = ah.get_house_info(address, angle, aspect, mountingplace)
+        output = ah.get_house_info(address, angle, aspect)
 
+        if output==None:
+            resp.status = falcon.HTTP_404
+            resp.text = "No data found for that address."
+        else:
+            resp.media = output
+            resp.media_handler = json_handler
+
+        # dummy values:
         # output = {}
         # output['address'] = address
         # output['category'] = "unknown"
@@ -118,8 +125,6 @@ class HouseInfoResource():
         # output["hot_water"] = "gas"
         # output['eco_rating'] = "Z"
 
-        resp.media = output
-        resp.media_handler = json_handler
 
 
 HouseInfoRes = HouseInfoResource()

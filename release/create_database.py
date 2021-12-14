@@ -71,7 +71,7 @@ for filename, table_name in filenames.items():
         if filename=="ElectricityProductionPlant.csv":
             # create additional column CompleteAddress which combines street/nr/zipcode/municipality
             df["CompleteAddress"] = df["Address"] + ", " + df["PostCode"].astype(str) + " " + df["Municipality"]
-            
+
             # transform from LV03 to wgs84
             transformer = Transformer.from_crs('EPSG:2056', 'EPSG:4326')
             df["lat"] = df.apply(lambda x: transformer.transform(x._x, x._y)[0], axis=1)
@@ -83,7 +83,7 @@ for filename, table_name in filenames.items():
         print("Written to table '%s'" %table_name)
     except ValueError as e:
         if str(e) == "Table '%s' already exists." %table_name:
-            
+
             # always overwrite on heroku:
             print("writing to table...")
             df.to_sql(table_name, engine, if_exists="replace")

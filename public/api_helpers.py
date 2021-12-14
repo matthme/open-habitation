@@ -9,18 +9,18 @@ dotenv.load_dotenv()
 
 local_database = os.getenv("LOCAL_DATABASE")
 
-# if local_database=="true":
-#     host = os.getenv("POSTGRES_HOST")
-#     port = os.getenv("POSTGRES_PORT")
-#     username = os.getenv("POSTGRES_USER")
-#     password = os.getenv("POSTGRES_PASSWORD")
-#     database = "geo_admin"
+if local_database=="true":
+    host = os.getenv("POSTGRES_HOST")
+    port = os.getenv("POSTGRES_PORT")
+    username = os.getenv("POSTGRES_USER")
+    password = os.getenv("POSTGRES_PASSWORD")
+    database = "openhabitation"
 
-#     connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
-# else:
-#     # database connection taylored for heroku deployment:
-#     DATABASE_URL = os.environ['DATABASE_URL']
-#     connection = pg.connect(DATABASE_URL, sslmode='require')
+    connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+else:
+    # database connection taylored for heroku deployment:
+    DATABASE_URL = os.environ['DATABASE_URL']
+    connection = pg.connect(DATABASE_URL, sslmode='require')
 
 
 # def get_production_info(CompleteAddress):
@@ -48,59 +48,82 @@ local_database = os.getenv("LOCAL_DATABASE")
 # ---------------------------------------------
 # FROM DATABASE
 
-def get_electricity_production_row(CompleteAddress):
 
+
+def get_house_info(address, angle=35, aspect=60):
+    """
+    Getting info for a house from the PostgreSQL databases
+
+    Parameters
+    ----------
+    address : str
+        address of the house to get the info for
+    angle : str, int or None, optional
+        angle of the PV panel (if any), by default 60
+    aspect : str, int or None, optional
+        aspect of the PV panel (if any), by default 35
+
+    Returns
+    -------
+    dict
+        dictionary containing the information about the house
+    """
+
+    response_dict = {}
+    response_dict["address"] = address
+    response_dict["coordinates"] = {}
+    response_dict["electricity_production"] = []
+    response_dict["space_heating"] = []
+    response_dict["domestic_hot_water"] = []
+
+    # extract EGID
     cursor = connection.cursor()
-    cursor.execute("select * from electricity_production where \"CompleteAddress\"=%s", (CompleteAddress, ))
+    cursor.execute("select \"EGID\", lat, lon from gwr where \"CompleteAddress\"=%s", (address, ))
     result = cursor.fetchall()
+    # print("EGID RESULT: ", result)
     if len(result)==0:
         return None
     else:
-        return result[0]
+        egid = result[0][0]
+        lat = result[0][1]
+        lon = result[0][2]
 
-def get_total_power(CompleteAddress):
+    response_dict["coordinates"]["lat"] = lat
+    response_dict["coordinates"]["lon"] = lon
 
-    cursor = connection.cursor()
-    cursor.execute("select \"TotalPower\" from electricity_production where \"CompleteAddress\"=%s", (CompleteAddress, ))
-    result = cursor.fetchall()
-    if len(result)==0:
-        return None
-    else:
-        return result[0][0]
+    # search production plant info
+    cursor.execute("select \"TotalPower\", \"PlantType\", \"MountingPlace\", \"BeginningOfOperation\" from electricity_production where \"EGID\"=%s", (egid, ))
+    production = cursor.fetchall()
+    for plant in production:
+        mountingplace = plant[2]
+        if mountingplace=="integrated":
+            mountingplace_query="building"
+        else:
+            mountingplace_query="free"
+        total_power = plant[0]
+        estimated_annual_production = get_pv_gis_data(lat, lon, total_power, None, mountingplace_query, angle, aspect)
+        plant_dict = {"plant_type":plant[1], "total_power":total_power, "mountingplace":mountingplace, "estimated_annual_production": estimated_annual_production, "beginning_of_operation":plant[3]}
+        response_dict["electricity_production"].append(plant_dict)
 
-def get_plant_type(CompleteAddress):
+    # search space_heating info
+    cursor.execute("select \"HeatingType\", \"ConstructionYear\" from heating_info where \"EGID\"=%s and \"InstallationType\"='SH'", (egid, ))
+    space_heating = cursor.fetchall()
+    # print("HEATING RESULT: ", space_heating)
+    for heating in space_heating:
+        space_heating_dict = {"heating_type":heating[0], "construction_year":heating[1]}
+        response_dict["space_heating"].append(space_heating_dict)
 
-    cursor = connection.cursor()
-    cursor.execute("select * from sub_category where \"Catalogue_id\"=(select \"SubCategory\" from electricity_production where \"CompleteAddress\"=%s)", (CompleteAddress, ))
-    result = cursor.fetchall()
+    # search hotwater info
+    cursor.execute("select \"HeatingType\", \"ConstructionYear\" from heating_info where \"EGID\"=%s and \"InstallationType\"='DHW'", (egid, ))
+    hot_water = cursor.fetchall()
+    # print("HOTWATER RESULT: ", hot_water)
+    for heating in hot_water:
+        hot_water_dict = {"heating_type":heating[0], "construction_year":heating[1]}
+        response_dict["domestic_hot_water"].append(hot_water_dict)
 
-    out_dict = {
-        "de":None,
-        "fr":None,
-        "it":None,
-        "en":None
-    }
 
-    if len(result)==0:
-        return out_dict
-    else:
-        out_dict["de"] = result[0][1]
-        out_dict["fr"] = result[0][2]
-        out_dict["it"] = result[0][3]
-        out_dict["en"] = result[0][4]
-        return out_dict
+    return response_dict
 
-def get_coordinates(CompleteAddress):
-
-    cursor = connection.cursor()
-    cursor.execute("select lat, lon from electricity_production where \"CompleteAddress\"=%s", (CompleteAddress, ))
-    result = cursor.fetchall()
-    print(result)
-    print(result[0][0])
-    lat = result[0][0]
-    lon = result[0][1]
-
-    return lat, lon
 
 
 
@@ -144,12 +167,6 @@ def get_pv_gis_data(lat, lon, peakpower, loss, mountingplace, angle, aspect):
     except Exception:
         return None
 
-def yearly_production(lat, lon, plant_type, peakpower=1, loss=14, mountingplace="free", angle=35, aspect=60):
-
-    if plant_type["en"] == "Photovoltaic":
-        return get_pv_gis_data(lat, lon, peakpower=peakpower, loss=loss, mountingplace=mountingplace, angle=angle, aspect=aspect)
-    else:
-        return None
 
 def calculate_rating(yearly_production=None):
     if yearly_production is None:
@@ -159,36 +176,6 @@ def calculate_rating(yearly_production=None):
     else:
         return 'A'
 
-
-
-def calculate_results(query):
-
-    CompleteAddress = query["address"]
-    angle = query["angle"]
-    aspect = query["aspect"]
-    mountingplace = query["mountingplace"]
-    #loss = query["loss"]
-    loss = 14 # default value at the moment
-
-
-    if get_electricity_production_row(CompleteAddress) == None: # if no data for this address in the database
-        return None
-    else:
-        peakpower = get_total_power(CompleteAddress)
-        plant_type = get_plant_type(CompleteAddress)
-        lat, lon = get_coordinates(CompleteAddress)
-
-        output = {}
-        output['address'] = CompleteAddress
-        output['yearly_production'] = yearly_production(lat, lon, plant_type, peakpower=peakpower, loss=loss, mountingplace=mountingplace, angle=angle, aspect=aspect)
-        output['eco_rating'] = calculate_rating(output['yearly_production'])
-        output['category'] = plant_type["en"]
-        output['total_power'] = peakpower
-        output['angle'] = angle
-        output['aspect'] = aspect
-        output['mountingplace'] = mountingplace
-
-        return output
 
 
 

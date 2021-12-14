@@ -40,10 +40,10 @@
         <input name="address" class="form-control" id="address" placeholder="Streetname nr, zipcode city"()/>
         <input name="angle" class="form-control" id="angle" placeholder="PV angle (optional), between 0-90, default 35"/>
         <input name="aspect" class="form-control" id="aspect" placeholder="PV orientation (optional), between -180 and 180, default 60"/>
-        <label for="mountingplace">Mountingplace:</label>
+        <!-- <label for="mountingplace">Mountingplace:</label>
         <select name="mountingplace" id="mountingplace">
           <option value="free">free-standing</option>
-          <option value="building">building-integrated</option>
+          <option value="building">building-integrated</option> -->
         </select>
       </form>
       <p style="color:#FF0000", id="search_error"></p>
@@ -51,10 +51,10 @@
     </div>
     <div class="media">
     </div>
-    <table class="table" id="results">
+    <!-- <table class="table" id="results">
         <thead>
           <tr>
-            <!-- <th scope="col" data-col="id">#</th> -->
+            <th scope="col" data-col="id">#</th>
             <th scope="col" data-col="address">Address</th>
             <th scope="col" data-col="plant_type">Photovoltaics</th>
             <th scope="col" data-col="total_power">PV Peak Power [kWp]</th>
@@ -69,7 +69,10 @@
         </thead>
         <tbody>
         </tbody>
-      </table>
+      </table> -->
+      <div>
+        <pre id="json-display"></pre>
+      </div>
 </article>
 
 
