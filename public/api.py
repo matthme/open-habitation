@@ -1,5 +1,5 @@
-from typing import Literal
-from api_helpers import *
+import apispec
+import api_helpers as ah
 import falcon
 import json
 import functools
@@ -20,20 +20,25 @@ import dotenv
 dotenv.load_dotenv()
 
 
-local_database = os.getenv("LOCAL_DATABASE")
+# create database connection
+# -----------------------------------------------------------------------------------------------------
+if True: # make code collapsable
+    local_database = os.getenv("LOCAL_DATABASE")
 
-if local_database=="true":
-    host = os.getenv("POSTGRES_HOST")
-    port = os.getenv("POSTGRES_PORT")
-    username = os.getenv("POSTGRES_USER")
-    password = os.getenv("POSTGRES_PASSWORD")
-    database = "geo_admin"
+    if local_database=="true":
+        host = os.getenv("POSTGRES_HOST")
+        port = os.getenv("POSTGRES_PORT")
+        username = os.getenv("POSTGRES_USER")
+        password = os.getenv("POSTGRES_PASSWORD")
+        database = "openhabitation"
 
-    connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
-else:
-    # database connection taylored for heroku deployment:
-    DATABASE_URL = os.environ['DATABASE_URL']
-    connection = pg.connect(DATABASE_URL, sslmode='require')
+        connection = pg.connect(database=database, user=username, password=password, host=host, port=port)
+    else:
+        # database connection taylored for heroku deployment:
+        DATABASE_URL = os.environ['DATABASE_URL']
+        connection = pg.connect(DATABASE_URL, sslmode='require')
+# -----------------------------------------------------------------------------------------------------
+
 
 app = application = falcon.App()
 
@@ -47,16 +52,19 @@ result_cache = []
 
 
 
-
 class AddressSearch():
+    """
+    Providing address suggestions based on pattern matching
+    """
 
     def on_get(self, req, resp):
 
+        print("request received")
         #print("received get request on /addresssearch")
         #print(req.params["term"])
         pattern = req.params["term"]+"%%"
         cursor = connection.cursor()
-        cursor.execute("select \"CompleteAddress\" from electricity_production where \"CompleteAddress\" ilike %(ilike)s order by \"Address\" limit 10" , {"ilike":pattern})
+        cursor.execute("select \"CompleteAddress\" from gwr where \"CompleteAddress\" ilike %(ilike)s order by \"CompleteAddress\" limit 15" , {"ilike":pattern})
         suggestions = cursor.fetchall()
         suggestions = [i[0] for i in suggestions]
         #print(suggestions)
@@ -65,13 +73,72 @@ class AddressSearch():
         resp.media_handler = json_handler
 
 
-
-street_search = AddressSearch()
-app.add_route("/addresssearch", street_search)
-
+SearchAddress = AddressSearch()
+app.add_route("/api/addresssearch", SearchAddress)
 
 
-class ProductionResource:
+class HouseInfoResource():
+    def __init__(self) -> None:
+        pass
+
+    def on_get(self, req, resp):
+        """
+        Handles GET requests
+        ---
+        description: Gets building information
+        responses:
+            200:
+                description: JSON blob
+        """
+        print(req)
+        print(req.params)
+
+        address = req.params["address"]
+        angle = req.params["angle"]
+        aspect = req.params["aspect"]
+        # mountingplace = req.params["mountingplace"]
+
+        if angle=="undefined":
+            angle = None
+        if aspect=="undefined":
+            aspect = None
+
+        output = ah.get_house_info(address, angle, aspect)
+
+        if output==None:
+            resp.status = falcon.HTTP_404
+            resp.text = "No data found for that address."
+        else:
+            resp.media = output
+            resp.media_handler = json_handler
+
+        # dummy values:
+        # output = {}
+        # output['address'] = address
+        # output['category'] = "unknown"
+        # output['total_power'] = 50
+        # output['angle'] = angle
+        # output['aspect'] = aspect
+        # output['mountingplace'] = mountingplace
+        # output['yearly_production'] = "unknown"
+        # output["space_heating"] = "gas"
+        # output["hot_water"] = "gas"
+        # output['eco_rating'] = "Z"
+
+
+
+HouseInfoRes = HouseInfoResource()
+app.add_route("/api/houseinfo", HouseInfoRes)
+
+
+class ProductionResource():
+    """
+    Getting information of electricity production for a specific address
+    """
+
+    def __init__(self) -> None:
+        pass
+
     def on_get(self, req, resp):
         """Handles GET requests
         ---
@@ -115,7 +182,7 @@ class ProductionResource:
             if r['address']==query['address'] and r['angle']==query['angle'] and r['aspect']==query['aspect'] and r['mountingplace']==query['mountingplace']:
                 data = r
         if data is None:
-            data = calculate_results(query)
+            data = ah.calculate_results(query)
             if data is not None:
                 #data['id'] = len(result_cache) + 1
                 result_cache.append(data)
@@ -131,22 +198,32 @@ class ProductionResource:
         resp.media_handler = json_handler
 
 
-prod_res = ProductionResource()
-app.add_route("/api/production/yearly", prod_res)
+# ProdRes = ProductionResource()
+# app.add_route("/api/production/yearly", ProdRes)
 
 
 
-spec = APISpec(
-    title="Open Habitation API",
-    version="0.1.0",
-    openapi_version='3.0',
-    plugins=[FalconPlugin(app)],
-)
+class HeatingResource():
+    def __init__(self) -> None:
+        pass
 
-spec.path(resource=prod_res)
+
+# HeatRes = HeatingResource()
+# app.add_route("/api/heating", HeatRes)
+
+
+
+# spec = APISpec(
+#     title="Open Habitation API",
+#     version="0.1.0",
+#     openapi_version='3.0',
+#     plugins=[FalconPlugin(app)],
+# )
+
+# spec.path(resource=ProdRes)
 
 # BUG! https://github.com/PWZER/swagger-ui-py/issues/29
-falcon_api_doc(app, config=spec.to_dict(), url_prefix='/api/doc/', title='API doc')
+# falcon_api_doc(app, config=spec.to_dict(), url_prefix='/api/doc/', title='API doc')
 #print(spec.to_yaml())
 
 class IndexResource(object):
@@ -158,7 +235,7 @@ class IndexResource(object):
 
 
 app.add_route('/', IndexResource())
-app.add_route('/js/script.js', Path('./js/script.js').resolve())
+app.add_static_route('/public/app.js', Path('./public/app.js').resolve())
 app.add_static_route('/public', Path('./public/').resolve())
 
 
@@ -166,3 +243,7 @@ if __name__ == '__main__':
     with make_server('', 8000, application) as httpd:
         print('Serving on http://localhost:8000')
         httpd.serve_forever()
+
+
+
+

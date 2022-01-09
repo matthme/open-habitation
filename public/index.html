@@ -17,8 +17,8 @@
 			  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
 			  crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
-
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="public/styles.css">
 
 </head>
 
@@ -37,38 +37,45 @@
 
     <div class="ui-widget station">
       <form>
-        <input class="form-control" id="address" placeholder="Streetname nr, zipcode city" onchange=search()/>
-        <input class="form-control" id="angle" placeholder="PV angle (optional), between 0-90, default 35" onchange=search()/>
-        <input class="form-control" id="aspect" placeholder="PV orientation (optional), between -180 and 180, default 60" onchange=search()/>
-        <label for="mountingplace">Mountingplace:</label>
+        <input name="address" class="form-control" id="address" placeholder="Streetname nr, zipcode city"()/>
+        <input name="angle" class="form-control" id="angle" placeholder="PV angle (optional), between 0-90, default 35"/>
+        <input name="aspect" class="form-control" id="aspect" placeholder="PV orientation (optional), between -180 and 180, default 60"/>
+        <!-- <label for="mountingplace">Mountingplace:</label>
         <select name="mountingplace" id="mountingplace">
           <option value="free">free-standing</option>
           <option value="building">building-integrated</option>
-        </select>
+        </select> -->
       </form>
       <p style="color:#FF0000", id="search_error"></p>
       <button type="button", id="search_button">Search!</button>
     </div>
     <div class="media">
     </div>
-
-    <table class="table" id="results">
-      <thead>
-        <tr>
-          <th scope="col" data-col="address">Address</th>
-          <th scope="col" data-col="category">Photovoltaics</th>
-          <th scope="col" data-col="total_power">PV Peak Power [kWp]</th>
-          <th scope="col" data-col="angle">PV Angle [°]</th> 
-          <th scope="col" data-col="aspect">PV Aspect [°]</th>
-          <th scope="col" data-col="mountingplace">Mounting Place</th>        
-          <th scope="col" data-col="yearly_production">PV Expected Annual\n Energy Production [kWh/a]</th>        
-          <th scope="col" data-col="eco_rating">Eco Rating</th>
-        </tr>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
+    <!-- <table class="table" id="results">
+        <thead>
+          <tr>
+            <th scope="col" data-col="id">#</th>
+            <th scope="col" data-col="address">Address</th>
+            <th scope="col" data-col="plant_type">Photovoltaics</th>
+            <th scope="col" data-col="total_power">PV Peak Power [kWp]</th>
+            <th scope="col" data-col="angle">PV Angle [°]</th>
+            <th scope="col" data-col="aspect">PV Aspect [°]</th>
+            <th scope="col" data-col="mountingplace">Mounting Place</th>
+            <th scope="col" data-col="yearly_production">PV Expected Annual Energy Production [kWh/a]</th>
+            <th scope="col" data-col="space_heating">Space Heating</th>
+            <th scope="col" data-col="hot_water">Domestic Hot Water</th>
+            <th scope="col" data-col="eco_rating">Eco Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table> -->
+      <div>
+        <pre id="json-display"></pre>
+      </div>
 </article>
+
+
 
 <footer class="footer">
   <hr>
@@ -85,121 +92,21 @@
     </p>
 </footer>
 
+</div>
+</div>
 
+<script type="module" src="public/app.js"></script>
 
 <script>
   $("document").ready(function() {
 
-    function populate(data) {
-        $results = $('#results tbody').empty();
-        $thead = $('#results thead th');
-        $(data).each(function () {
-            var line = '<tr>';
-            var row = this;
-            $thead.each(function () {
-              ref = $(this).data('col');
-              line += '<td>' + row[ref] + '</td>';
-            })
-            $results.prepend(line + '</tr>');
-        });
-    }
-
-
-    // function refresh(e) {
-    //   e.stopPropagation();
-    //   search = $('#address').val();
-    //   if (search.length > 3) {
-    //       $.post('/api/production/yearly', {address: search}, populate, 'json');
-    //       $('#address').val('')
-    //   }
-    //   return false;
-    // }
-
-    function postSearchRequest() {
-      $('#search_error').text('');
-      let address = $('#address').val();
-      let angle = $('#angle').val();
-      let aspect = $('#aspect').val();
-      let mountingplace = $('#mountingplace').val();
-
-      if (angle.length == 0) {
-        angle = "35"
-      }
-      if (aspect.length == 0) {
-        aspect = "60"
-      }
-
-      if ((angle < 0) || (angle > 90) || (isNaN(parseInt(angle)))) {
-        $('#search_error').text("PV angle must be a number between 0 and 90.");
-        return
-      } else if ((aspect < -180) || (aspect > 180) || (isNaN(parseInt(aspect)))) {
-        $('#search_error').text("PV orientation (aspect) must be a number between -180 and 180.");
-        return
-      };
-
-      $.post('api/production/yearly', {address: address, angle: angle, aspect: aspect, mountingplace: mountingplace}, populate, 'json')
-      .fail(function(response) {
-          $('#search_error').text(response.responseText);
-      });
-      };
-
-    $("#search_button").on('click', postSearchRequest);
-
-    
     $("#address").autocomplete({
-      source: "addresssearch",
+      source: "api/addresssearch",
       minLength: 2
     });
 
   });
-
 </script>
-
-
-
-
-
-
-<style>
-    h3 {
-         margin: 40px 0 20px;
-    }
-
-    .ui-widget,
-    .ui-widget input {
-        font-family: Arial, sans-serif;
-        font-size: 13px;
-    }
-
-    .ui-autocomplete {
-        text-align: left;
-    }
-
-    strong {
-        color: #d10505;
-    }
-
-    .column {
-        float: right;
-    }
-
-    .media {
-        padding-top: 30px;
-    }
-
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-
-    td, th {
-        padding: 8px;
-        line-height: 18px;
-        vertical-align: top;
-        border-bottom: 1px solid #DDD;
-    }
-
-</style>
 
 </body>
 </html>
