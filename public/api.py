@@ -235,7 +235,7 @@ class IndexResource(object):
 
 
 app.add_route('/', IndexResource())
-app.add_static_route('/public/app.js', Path('./public/app.js').resolve())
+app.add_static_route('/public/script.js', Path('./public/script.js').resolve())
 app.add_static_route('/public', Path('./public/').resolve())
 
 
