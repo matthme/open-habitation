@@ -48,6 +48,7 @@ for filename, table_name in filenames.items():
         print(df.head(1))
         print("Writing to table %s..." %table_name)
         df.to_sql(table_name, engine, if_exists="fail", chunksize=10000)
+        del df
 
     except ValueError as e:
         if str(e) == "Table '%s' already exists." %table_name:
@@ -59,6 +60,7 @@ for filename, table_name in filenames.items():
                     if answer=="o" or answer=="O":
                         print("writing to table...")
                         df.to_sql(table_name, engine, if_exists="replace")
+                        del df
                         break
                     elif answer=="s" or answer=="S":
                         break
@@ -70,6 +72,7 @@ for filename, table_name in filenames.items():
                 # always overwrite on heroku:
                 print("writing to table...")
                 df.to_sql(table_name, engine, if_exists="replace")
+                del df
 
         else:
             raise e
