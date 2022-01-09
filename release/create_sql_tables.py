@@ -85,3 +85,5 @@ for filename, table_name in filenames.items():
 
             else:
                 raise e
+
+print("Filling database complete.")
