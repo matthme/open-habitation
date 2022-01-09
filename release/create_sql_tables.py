@@ -44,7 +44,7 @@ filenames = {"electricityProduction_TABLE.csv":"electricity_production", "gwr_TA
 for filename, table_name in filenames.items():
 
     print("Downloading '%s'..." %filename)
-    chunks = pd.read_csv(download_paths[filename], index_col=0, chunksize=50000)
+    chunks = pd.read_csv(download_paths[filename], index_col=0, chunksize=30000)
     print("Writing to table %s..." %table_name)
     counter = 0
     for df in chunks:
