@@ -73,6 +73,7 @@ for filename, table_name in filenames.items():
 
                 else:
                     # always overwrite on heroku:
+                    print("Overwriting existing table.")
                     print("Writing chunk %s" %counter)
                     df.to_sql(table_name, engine, if_exists="replace")
                     counter += 1
