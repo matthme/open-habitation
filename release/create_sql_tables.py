@@ -42,37 +42,46 @@ filenames = {"electricityProduction_TABLE.csv":"electricity_production", "gwr_TA
 
 
 for filename, table_name in filenames.items():
-    try:
-        print("Downloading '%s'..." %filename)
-        df = pd.read_csv(download_paths[filename], index_col=0)
-        print(df.head(1))
-        print("Writing to table %s..." %table_name)
-        df.to_sql(table_name, engine, if_exists="fail", chunksize=10000)
-        del df
 
-    except ValueError as e:
-        if str(e) == "Table '%s' already exists." %table_name:
+    print("Downloading '%s'..." %filename)
+    chunks = pd.read_csv(download_paths[filename], index_col=0, chunksize=50000)
+    print("Writing to table %s..." %table_name)
+    counter = 0
+    for df in chunks:
+        try:
+            df.to_sql(table_name, engine, if_exists="fail", chunksize=10000)
+            print("Writing chunk %s" %counter)
+            counter += 1
 
-            if local_database=="true":
-                # on own server/ local machine
-                while True:
-                    answer = input("Table '%s' already exists. Do wou want to overwrite it (o) or skip it (s)?" %table_name)
-                    if answer=="o" or answer=="O":
-                        print("writing to table...")
-                        df.to_sql(table_name, engine, if_exists="replace")
-                        del df
-                        break
-                    elif answer=="s" or answer=="S":
-                        break
-                    else:
-                        continue
-                pass
+        except ValueError as e:
+            if str(e) == "Table '%s' already exists." %table_name and counter==0:
+
+                if local_database=="true":
+                    # on own server/ local machine
+                    while True:
+                        answer = input("Table '%s' already exists. Do wou want to overwrite it (o) or skip it (s)?" %table_name)
+                        if answer=="o" or answer=="O":
+                            print("Writing chunk %s" %counter)
+                            df.to_sql(table_name, engine, if_exists="replace")
+                            counter += 1
+                            break
+                        elif answer=="s" or answer=="S":
+                            break
+                        else:
+                            continue
+                    pass
+
+                else:
+                    # always overwrite on heroku:
+                    print("Writing chunk %s" %counter)
+                    df.to_sql(table_name, engine, if_exists="replace")
+                    counter += 1
+
+            elif str(e) == "Table '%s' already exists." %table_name and counter>0:
+                # append:
+                print("Writing chunk %s" %counter)
+                df.to_sql(table_name, engine, if_exists="append")
+                counter += 1
 
             else:
-                # always overwrite on heroku:
-                print("writing to table...")
-                df.to_sql(table_name, engine, if_exists="replace")
-                del df
-
-        else:
-            raise e
+                raise e
