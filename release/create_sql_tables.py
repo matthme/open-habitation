@@ -32,12 +32,19 @@ else: # taylored for heroku deployment:
 engine = sqlalchemy.create_engine(DATABASE_URL_SQLALCHEMY)
 
 
+download_paths = {
+    "electricityProduction_TABLE.csv": "https://drive.switch.ch/index.php/s/gvQQyntaRACA02C/download",
+    "gwr_TABLE.csv": "https://drive.switch.ch/index.php/s/BrJLquqI3aKYlJe/download",
+    "heatingInfo_TABLE.csv": "https://drive.switch.ch/index.php/s/KbDql9Acv9SxFYr/download"
+}
+
 filenames = {"electricityProduction_TABLE.csv":"electricity_production", "gwr_TABLE.csv":"gwr", "heatingInfo_TABLE.csv":"heating_info"}
 
 
 for filename, table_name in filenames.items():
     try:
-        df = pd.read_csv(filename, index_col=0)
+        print("Downloading '%s'..." %filename)
+        df = pd.read_csv(download_paths[filename], index_col=0)
         print(df.head(1))
         print("Writing to table %s..." %table_name)
         df.to_sql(table_name, engine, if_exists="fail", chunksize=10000)
