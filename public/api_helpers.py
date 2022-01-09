@@ -72,9 +72,11 @@ def get_house_info(address, angle=35, aspect=60):
     response_dict = {}
     response_dict["address"] = address
     response_dict["coordinates"] = {}
-    response_dict["electricity_production"] = []
-    response_dict["space_heating"] = []
-    response_dict["domestic_hot_water"] = []
+    response_dict["summary"] = {}
+    response_dict["installations"] = {}
+    response_dict["installations"]["electricity_production"] = []
+    response_dict["installations"]["space_heating"] = []
+    response_dict["installations"]["domestic_hot_water"] = []
 
     # extract EGID
     cursor = connection.cursor()
@@ -102,8 +104,8 @@ def get_house_info(address, angle=35, aspect=60):
             mountingplace_query="free"
         total_power = plant[0]
         estimated_annual_production = get_pv_gis_data(lat, lon, total_power, None, mountingplace_query, angle, aspect)
-        plant_dict = {"plant_type":plant[1], "total_power":total_power, "mountingplace":mountingplace, "estimated_annual_production": estimated_annual_production, "beginning_of_operation":plant[3]}
-        response_dict["electricity_production"].append(plant_dict)
+        plant_dict = {"plant_type":plant[1], "total_power":total_power, "mountingplace":mountingplace, "estimated_annual_production_kWh": estimated_annual_production, "beginning_of_operation":plant[3]}
+        response_dict["installations"]["electricity_production"].append(plant_dict)
 
     # search space_heating info
     cursor.execute("select \"HeatingType\", \"ConstructionYear\" from heating_info where \"EGID\"=%s and \"InstallationType\"='SH'", (egid, ))
@@ -111,7 +113,7 @@ def get_house_info(address, angle=35, aspect=60):
     # print("HEATING RESULT: ", space_heating)
     for heating in space_heating:
         space_heating_dict = {"heating_type":heating[0], "construction_year":heating[1]}
-        response_dict["space_heating"].append(space_heating_dict)
+        response_dict["installations"]["space_heating"].append(space_heating_dict)
 
     # search hotwater info
     cursor.execute("select \"HeatingType\", \"ConstructionYear\" from heating_info where \"EGID\"=%s and \"InstallationType\"='DHW'", (egid, ))
@@ -119,12 +121,119 @@ def get_house_info(address, angle=35, aspect=60):
     # print("HOTWATER RESULT: ", hot_water)
     for heating in hot_water:
         hot_water_dict = {"heating_type":heating[0], "construction_year":heating[1]}
-        response_dict["domestic_hot_water"].append(hot_water_dict)
+        response_dict["installations"]["domestic_hot_water"].append(hot_water_dict)
 
+    summary = get_summary(response_dict)
+
+    response_dict["summary"] = summary
 
     return response_dict
 
 
+def get_summary(response_dict):
+    """
+    Determining the summary of house info
+
+    Parameters
+    ----------
+    response_dict : dict
+        dictionary containing info about the production and heating/hot water of a house
+
+    Returns
+    -------
+    dict
+        dictionary containing the summary parameters
+    """
+    summary = {}
+
+    # calculate total production power if any
+    production_plants = response_dict["installations"]["electricity_production"]
+    if len(production_plants) > 0:
+        total_production_kWh = 0
+        for plant in production_plants:
+            try:
+                total_production_kWh += plant["estimated_annual_production_kWh"]
+            except KeyError:
+                pass
+        summary["estimated_annual_total_production_kWh"] = total_production_kWh
+    else:
+        summary["estimated_annual_total_production_kWh"] = None
+
+    # classify space-heating
+    space_heatings = response_dict["installations"]["space_heating"]
+    space_heating_quality = classify_heating_quality(space_heatings)
+    summary["space_heating"] = space_heating_quality
+
+    # classify hot water
+    domestic_hot_water = response_dict["installations"]["domestic_hot_water"]
+    domestic_hot_water_quality = classify_heating_quality(domestic_hot_water)
+    summary["domestic_hot_water"] = domestic_hot_water_quality
+
+    return summary
+
+
+def classify_heating_quality(heatings: list):
+    """Classifies heating type into "renewable" or "non-renewable"
+
+    Parameters
+    ----------
+    heatings : list
+        list containing dicts of heating installation info
+
+    Returns
+    -------
+    str
+        "renewable" or "non-renewable"
+    """
+    heating_types = []
+    for heating in heatings:
+        try:
+            heating_types.append(heating["heating_type"])
+        except KeyError:
+            pass
+
+    if len(heatings) > 1:
+        if "wood (a)" in heating_types:
+            heating_types = list(filter(("wood (a)").__ne__, heating_types)) # remove occurrences of "wood (a)"
+
+    heating_qualities = []
+
+    for heating_type in heating_types:
+        heating_qualities.append(classify_heating_type(heating_type))
+
+    if "unknown" in heating_qualities:
+        return "unknown"
+    elif "renewable" in heating_qualities and "non-renewable" in heating_qualities:
+        return "unknown"
+    elif "renewable" in heating_qualities:
+        return "renewable"
+    elif "non-renewable" in heating_qualities:
+        return "non-renewable"
+    else:
+        return "unknown"
+
+
+
+def classify_heating_type(heating_type: str):
+    """
+    Classifies the heating type in "renewable", "non-renewable" or unknown
+
+    Parameters
+    ----------
+    heating_type : str
+        heating type
+    Returns
+    -------
+    str
+        quality of heating type, one of ["renewable", "non-renewable", "unknown"]
+    """
+
+    if heating_type in ["wood (a)", "wood (b)", "wood (c)", "district_heating", "geothermal", "heatpump (air)", "heatpump (water)", "heatpump (geothermal)", "solar"]:
+        return "renewable"
+    elif heating_type in ["gas", "oil", "biogas", "electricity (resistive)", "heavy oil", "coal"]:
+        return "non-renewable"
+    else:
+        return "unknown"
 
 
 # ---------------------------------------------
