@@ -1,3 +1,3 @@
 #!/bin/bash
-python3 ./release/download_production_data.py
-python3 ./release/create_database.py
+python3 ./release/download_database_files.py
+python3 ./release/create_sql_tables.py
