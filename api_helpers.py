@@ -1,3 +1,5 @@
+from unittest import result
+from urllib import response
 import requests
 from pyproj import Transformer
 import psycopg2 as pg
@@ -80,7 +82,7 @@ def get_house_info(address, angle=35, aspect=60):
 
     # extract EGID
     cursor = connection.cursor()
-    cursor.execute("select \"EGID\", lat, lon from gwr where \"CompleteAddress\"=%s", (address, ))
+    cursor.execute("select \"EGID\", lat, lon, \"GKODE\", \"GKODN\" from gwr where \"CompleteAddress\"=%s", (address, ))
     result = cursor.fetchall()
     # print("EGID RESULT: ", result)
     if len(result)==0:
@@ -89,6 +91,8 @@ def get_house_info(address, angle=35, aspect=60):
         egid = result[0][0]
         lat = result[0][1]
         lon = result[0][2]
+        gkode = result[0][3]
+        gkodn = result[0][4]
 
     response_dict["coordinates"]["lat"] = lat
     response_dict["coordinates"]["lon"] = lon
@@ -126,6 +130,10 @@ def get_house_info(address, angle=35, aspect=60):
     summary = get_summary(response_dict)
 
     response_dict["summary"] = summary
+
+    space_heating_demand, domestic_hot_water_demand = get_heating_demands(gkode, gkodn)
+    response_dict["summary"]["space_heating_demand_kWh"] = space_heating_demand
+    response_dict["summary"]["domestic_hot_water_demand_kWh"] = domestic_hot_water_demand
 
     return response_dict
 
@@ -213,7 +221,6 @@ def classify_heating_quality(heatings: list):
         return "unknown"
 
 
-
 def classify_heating_type(heating_type: str):
     """
     Classifies the heating type in "renewable", "non-renewable" or unknown
@@ -237,7 +244,7 @@ def classify_heating_type(heating_type: str):
 
 
 # ---------------------------------------------
-# FROM EXTERNAL API
+# FROM EXTERNAL API's
 
 def get_pv_gis_data(lat, lon, peakpower, loss, mountingplace, angle, aspect):
 
@@ -275,6 +282,64 @@ def get_pv_gis_data(lat, lon, peakpower, loss, mountingplace, angle, aspect):
         return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
     except Exception:
         return None
+
+
+def get_heating_demands(gkode, gkodn):
+    """
+    Fetching space heating and hotwater demand from sonnandach API (https://github.com/SFOE/geo-api-documentation)
+
+    Parameters
+    ----------
+    gkode : str
+        x coordinate (swiss coordinate system, as used in Gebaeude- und Wohnregister)
+    gkodn : str
+        y coordinate (swiss coordinate systen, as used in Gebaeude- und Wohnregister)
+    """
+
+    space_heating_demand = None
+    domestic_hot_water_demand = None
+
+    url = f"https://api3.geo.admin.ch//rest/services/api/MapServer/identify?\
+geometryType=esriGeometryPoint&\
+returnGeometry=true&\
+layers=all:ch.bfe.solarenergie-eignung-daecher&\
+geometry={gkode},{gkodn}&\
+tolerance=0&\
+order=distance&\
+sr=2056"
+
+    # try:
+    #     return (requests.get(url).json()['outputs']['totals']['fixed']['E_y'])
+    # except Exception:
+    #     return None
+    try:
+        response = requests.get(url)
+    except Exception as e:
+        print("Calling sonnendach API failed:")
+        print(e)
+        return space_heating_demand, domestic_hot_water_demand
+    try:
+        response = response.json()
+    except Exception as e:
+        print("Conversion to json failed:")
+        print(e)
+        print(url)
+        return space_heating_demand, domestic_hot_water_demand
+
+    try:
+        space_heating_demand = response["results"][0]["attributes"]["bedarf_heizung"]
+    except Exception as e:
+        print("Could not extract space heating demand:")
+        print(e)
+
+    try:
+        domestic_hot_water_demand = response["results"][0]["attributes"]["bedarf_warmwasser"]
+    except Exception as e:
+        print("Could not extract space heating demand:")
+        print(e)
+
+    return space_heating_demand, domestic_hot_water_demand
+
 
 
 def calculate_rating(yearly_production=None):
@@ -369,17 +434,20 @@ if __name__=="__main__":
 
     address = "Hallenbadweg 15, 8610 Uster"
     # address = "Schlossstrasse 15, 4147 Aesch BL"
-    row = get_electricity_production_row(address)
-    print("ROW: ", row)
-    total_power = get_total_power(address)
-    print(type(total_power))
-    print(total_power)
-    plant_type = get_plant_type(address)
-    print(type(plant_type))
-    print(plant_type)
-    print(get_coordinates(address))
-    print("PV gis data:")
 
-    lat, lon = get_coordinates(address)
-    print("lat: ", lat, "lon: ", lon)
-    print(get_pv_gis_data(lat, lon))
+    response = get_house_info(address)
+    print(response)
+    # row = get_electricity_production_row(address)
+    # print("ROW: ", row)
+    # total_power = get_total_power(address)
+    # print(type(total_power))
+    # print(total_power)
+    # plant_type = get_plant_type(address)
+    # print(type(plant_type))
+    # print(plant_type)
+    # print(get_coordinates(address))
+    # print("PV gis data:")
+
+    # lat, lon = get_coordinates(address)
+    # print("lat: ", lat, "lon: ", lon)
+    # print(get_pv_gis_data(lat, lon))
