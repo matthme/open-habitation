@@ -1,4 +1,9 @@
-The folling data should be put in this folder:
+This folder may be used to store the .csv files in which are used to create the tables of the PostgreSQL instance.
 
-- .csv files of electricity production plants to put in PostgreSQL database. It can be downloaded here: https://www.geocat.ch/geonetwork/srv/ger/catalog.search#/search?resultType=details&sortBy=relevance&any=ch.bfe.elektrizitaetsproduktionsanlagen&from=1&to=20 
-  after download,e xtract the folder in this directory (without renaming the folder).
+Currently these would be:
+
+- electricityProduction_TABLE.csv
+- gwr_TABLE.csv
+- heatingInfo_TABLE.csv
+
+
