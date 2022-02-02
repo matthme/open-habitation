@@ -2,6 +2,7 @@
 
 This is a project started at the [Energy Data Hackdays 2021](https://energydatahackdays.ch/) ([project page](https://hack.opendata.ch/project/779)).
 
+
 See here for an example implementation of the API: https://www.openhabitation.org
 
 
