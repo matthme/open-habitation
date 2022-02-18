@@ -93,9 +93,20 @@ class HouseInfoResource():
         print(req)
         print(req.params)
 
-        address = req.params["address"]
-        angle = req.params["angle"]
-        aspect = req.params["aspect"]
+        try:
+            address = req.params["address"]
+        except KeyError:
+            resp.status = falcon.HTTP_400
+            resp.text = "address field required."
+            return 0
+        try:
+            angle = req.params["angle"]
+        except KeyError:
+            angle = None
+        try:
+            aspect = req.params["aspect"]
+        except KeyError:
+            aspect = None
         # mountingplace = req.params["mountingplace"]
 
         if angle=="undefined":
